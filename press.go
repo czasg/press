@@ -48,18 +48,18 @@ func RunPressV1(ctx context.Context, cfg *Config) {
                     resp, err := client.Do(req)
                     if err != nil {
                         stat.RecordKill()
-                        goto LOOP
+                        continue
                     }
                     stat.RecordResponseTime(start)
                     body, err := ioutil.ReadAll(resp.Body)
                     if err != nil {
                         stat.RecordKill()
-                        goto LOOP
+                        continue
                     }
                     _ = resp.Body.Close()
                     if step.Assert.StatusCode > 0 && resp.StatusCode != step.Assert.StatusCode {
                         stat.RecordKill()
-                        goto LOOP
+                        continue
                     }
                     if len(step.Assert.Headers) > 0 {
                         for _, header := range step.Assert.Headers {
@@ -73,14 +73,14 @@ func RunPressV1(ctx context.Context, cfg *Config) {
                     }
                     if step.Assert.Body != "" && string(body) != step.Assert.Body {
                         stat.RecordKill()
-                        goto LOOP
+                        continue
                     }
                     if len(step.Assert.JsonMap) > 0 {
                         var m map[string]interface{}
                         err := json.Unmarshal(body, &m)
                         if err != nil {
                             stat.RecordKill()
-                            goto LOOP
+                            continue
                         }
                         for _, jsonMap := range step.Assert.JsonMap {
                             for k, v := range jsonMap {
