@@ -33,6 +33,7 @@ func RunPressV1(ctx context.Context, cfg *Config) {
                         }).DialContext,
                     },
                 }
+            LOOP:
                 for {
                     select {
                     case <-ctxTime.Done():
@@ -47,50 +48,50 @@ func RunPressV1(ctx context.Context, cfg *Config) {
                     resp, err := client.Do(req)
                     if err != nil {
                         stat.RecordKill()
-                        continue
+                        goto LOOP
                     }
                     stat.RecordResponseTime(start)
                     body, err := ioutil.ReadAll(resp.Body)
                     if err != nil {
                         stat.RecordKill()
-                        continue
+                        goto LOOP
                     }
                     _ = resp.Body.Close()
                     if step.Assert.StatusCode > 0 && resp.StatusCode != step.Assert.StatusCode {
                         stat.RecordKill()
-                        continue
+                        goto LOOP
                     }
                     if len(step.Assert.Headers) > 0 {
                         for _, header := range step.Assert.Headers {
                             for k, v := range header {
                                 if resp.Header.Get(k) != v {
                                     stat.RecordKill()
-                                    continue
+                                    goto LOOP
                                 }
                             }
                         }
                     }
                     if step.Assert.Body != "" && string(body) != step.Assert.Body {
                         stat.RecordKill()
-                        continue
+                        goto LOOP
                     }
                     if len(step.Assert.JsonMap) > 0 {
                         var m map[string]interface{}
                         err := json.Unmarshal(body, &m)
                         if err != nil {
                             stat.RecordKill()
-                            continue
+                            goto LOOP
                         }
                         for _, jsonMap := range step.Assert.JsonMap {
                             for k, v := range jsonMap {
                                 v1, ok := m[k]
                                 if !ok {
                                     stat.RecordKill()
-                                    continue
+                                    goto LOOP
                                 }
                                 if !reflect.DeepEqual(v, v1) {
                                     stat.RecordKill()
-                                    continue
+                                    goto LOOP
                                 }
                             }
                         }
