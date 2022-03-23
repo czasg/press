@@ -4,11 +4,12 @@ import (
     "bytes"
     "context"
     "encoding/json"
+    "fmt"
     "io/ioutil"
     "log"
     "net"
     "net/http"
-    "reflect"
+    "strings"
     "time"
 )
 
@@ -89,7 +90,10 @@ func RunPressV1(ctx context.Context, cfg *Config) {
                                     stat.RecordKill()
                                     goto LOOP
                                 }
-                                if !reflect.DeepEqual(v, v1) {
+                                if !strings.EqualFold(
+                                    fmt.Sprintf("%v", v),
+                                    fmt.Sprintf("%v", v1),
+                                ) {
                                     stat.RecordKill()
                                     goto LOOP
                                 }
