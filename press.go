@@ -98,10 +98,18 @@ func RunPressV1(ctx context.Context, cfg *Config) {
                     stat.RecordOK()
                 }
             }
-
-            for i := 0; i < step.ThreadGroup.Thread; i++ {
-                go press()
-            }
+            go func() {
+                interval := time.Second * time.Duration(step.ThreadGroup.ThreadRampUp) / time.Duration(step.ThreadGroup.Thread)
+                for i := 0; i < step.ThreadGroup.Thread; i++ {
+                    select {
+                    case <-ctxTime.Done():
+                        return
+                    default:
+                        go press()
+                        time.Sleep(interval)
+                    }
+                }
+            }()
             interval := time.NewTicker(time.Second * time.Duration(step.LogInterval))
             for {
                 select {
