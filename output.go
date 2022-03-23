@@ -40,7 +40,7 @@ func (this *Stat) String() string {
     this.lock.Lock()
     this.Count++
     text := fmt.Sprintf(
-        "瞬时：[%v]QPS 平均：[%v]QPS 平均响应：[%v] 错误次数：[%v]",
+        "瞬时：[%v]QPS 平均：[%v]QPS 平均响应：[%v]ms 错误次数：[%v]",
         this.OkQPS,
         this.Ok/this.Count,
         this.ResponseTime/this.Count,
