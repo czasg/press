@@ -19,9 +19,11 @@ type Metadata struct {
 
 type Steps struct {
     Name        string      `yaml:"name"`
+    LogInterval int         `yaml:"logInterval"`
     ThreadGroup ThreadGroup `yaml:"threadGroup"`
     Http        Http        `yaml:"http"`
     Assert      Assert      `yaml:"assert"`
+    Output      Output      `yaml:"output"`
 }
 
 type ThreadGroup struct {
@@ -42,6 +44,10 @@ type Assert struct {
     Headers    []map[string]string      `yaml:"headers"`
     Body       string                   `yaml:"body"`
     JsonMap    []map[string]interface{} `yaml:"jsonMap"`
+}
+
+type Output struct {
+    Path string
 }
 
 func MustParseConfig(cfgFilePath string) *Config {
