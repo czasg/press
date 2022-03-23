@@ -64,8 +64,8 @@ func main() {
     version := flag.String("init", "", "初始化配置文件")
     cfgFilePath := flag.String("f", "", "配置文件")
     flag.Parse()
-    if version != "" {
-        switch version {
+    if *version != "" {
+        switch *version {
         case "1":
             CreateYaml()
         default:
