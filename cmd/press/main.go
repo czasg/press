@@ -54,7 +54,7 @@ func NewSignalContext() context.Context {
     go func() {
         ch := make(chan os.Signal, 1)
         signal.Notify(ch, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
-        <-ch
+        log.Printf("检测到退出指令[%v]", <-ch)
         cancel()
     }()
     return ctx
