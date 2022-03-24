@@ -22,6 +22,7 @@ func CreateYaml() {
         log.Printf("初始化yaml内容异常：%v", err)
         return
     }
+    log.Printf("初始化 yaml 成功")
 }
 
 func NewSignalContext() context.Context {
@@ -36,16 +37,10 @@ func NewSignalContext() context.Context {
 }
 
 func main() {
-    version := flag.String("init", "", "初始化配置文件")
     cfgFilePath := flag.String("f", "", "配置文件")
     flag.Parse()
-    if *version != "" {
-        switch *version {
-        case "1":
-            CreateYaml()
-        default:
-            CreateYaml()
-        }
+    if flag.Arg(0) == "init" {
+        CreateYaml()
         return
     }
     if *cfgFilePath == "" {
