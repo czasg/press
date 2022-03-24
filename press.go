@@ -30,7 +30,7 @@ func RunPressCMD(ctx context.Context, cfg *Config) {
 
 func runPressHttp(ctx context.Context, step Steps) {
     ctxTime, _ := context.WithTimeout(ctx, time.Duration(step.ThreadGroup.Duration)*time.Second)
-    stat := &Stat{}
+    stat := NewStat(step)
     press := func() {
         client := &http.Client{
             Transport: &http.Transport{
@@ -125,8 +125,6 @@ func runPressHttp(ctx context.Context, step Steps) {
     for {
         select {
         case <-ctxTime.Done():
-            log.Printf("保存压测结果...")
-            log.Printf("保存完成[%v]", stat.Save(step.Output))
             return
         case <-interval.C:
             log.Println(stat.String())

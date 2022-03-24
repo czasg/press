@@ -6,18 +6,25 @@ import (
     "time"
 )
 
+func NewStat(step Steps) *Stat {
+    return &Stat{}
+}
+
 type Stat struct {
-    lock         sync.Mutex
-    Count        int64
-    OkQPS        int64
-    KillQPS      int64
-    Ok           int64
-    Kill         int64
-    ResponseTime int64
+    lock              sync.Mutex
+    TotalRequests     int64
+    Count             int64
+    OkQPS             int64
+    Ok                int64
+    Kill              int64
+    MinResponseTime   int64
+    MaxResponseTime   int64
+    TotalResponseTime int64
 }
 
 func (this *Stat) RecordOK() {
     this.lock.Lock()
+    this.TotalRequests++
     this.OkQPS++
     this.Ok++
     this.lock.Unlock()
@@ -25,38 +32,71 @@ func (this *Stat) RecordOK() {
 
 func (this *Stat) RecordKill() {
     this.lock.Lock()
-    this.KillQPS++
+    this.TotalRequests++
     this.Kill++
     this.lock.Unlock()
 }
 
 func (this *Stat) RecordResponseTime(start time.Time) {
     this.lock.Lock()
-    this.ResponseTime += time.Since(start).Milliseconds()
+    responseTime := time.Since(start).Milliseconds()
+    if this.MinResponseTime == 0 {
+        this.MinResponseTime = responseTime
+    }
+    if responseTime < this.MinResponseTime {
+        this.MinResponseTime = responseTime
+    }
+    if responseTime > this.MaxResponseTime {
+        this.MaxResponseTime = responseTime
+    }
+    this.TotalResponseTime += responseTime
     this.lock.Unlock()
 }
 
 func (this *Stat) String() string {
     this.lock.Lock()
     this.Count++
-    text := fmt.Sprintf(
-        "瞬时：[%v]QPS 平均：[%v]QPS 平均响应：[%v]ms 错误次数：[%v]",
-        this.OkQPS,
-        this.Ok/this.Count,
-        this.ResponseTime/this.Count,
-        this.Kill,
-    )
+    record := Record{
+        RecordTime:      time.Now(),
+        TotalRequests:   this.TotalRequests,
+        CurrentQPS:      this.OkQPS,
+        MeanQPS:         this.Ok / this.Count,
+        KillRequests:    this.Kill,
+        MinResponseTime: this.MinResponseTime,
+        MaxResponseTime: this.MaxResponseTime,
+    }
+    if this.TotalRequests > 0 {
+        record.MeanResponseTime = this.TotalResponseTime / this.TotalRequests
+    }
     this.OkQPS = 0
-    this.KillQPS = 0
     this.lock.Unlock()
-    return text
+    this.Save(record)
+    return record.String()
 }
 
-func (this *Stat) Save(output Output) string {
-    this.lock.Lock()
-    if output.Path == "" {
-        return "未指定存储路径"
-    }
-    this.lock.Unlock()
-    return "暂不支持"
+func (this *Stat) Save(record Record) {
+}
+
+type Record struct {
+    RecordTime       time.Time
+    TotalRequests    int64
+    CurrentQPS       int64
+    MeanQPS          int64
+    KillRequests     int64
+    MinResponseTime  int64
+    MaxResponseTime  int64
+    MeanResponseTime int64
+}
+
+func (this Record) String() string {
+    return fmt.Sprintf(
+        "瞬时[%v]QPS 平均[%v]QPS 平均响应[%v]ms 最小/大响应[%v/%v]ms  总请求次数[%v] 错误次数[%v]",
+        this.CurrentQPS,
+        this.MeanQPS,
+        this.MeanResponseTime,
+        this.MinResponseTime,
+        this.MaxResponseTime,
+        this.TotalRequests,
+        this.KillRequests,
+    )
 }
