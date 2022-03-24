@@ -3,6 +3,7 @@ package main
 import (
     "context"
     "flag"
+    "fmt"
     "github.com/czasg/press"
     "log"
     "os"
@@ -37,6 +38,15 @@ func NewSignalContext() context.Context {
 }
 
 func main() {
+    flag.Usage = func() {
+        fmt.Println(`压力测试工具 press 使用方法：
+* 初始化 press.yaml 文件：
+    press init
+* 测试开始：
+    press -f press.yaml
+* 参数说明：`)
+        flag.PrintDefaults()
+    }
     cfgFilePath := flag.String("f", "", "配置文件")
     flag.Parse()
     if flag.Arg(0) == "init" {
