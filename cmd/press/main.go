@@ -52,6 +52,7 @@ func main() {
         flag.PrintDefaults()
         log.Fatalf("未指定配置文件")
     }
+    ctx := NewSignalContext()
     cfg := press.MustParseConfig(*cfgFilePath)
-    press.RunPressV1(NewSignalContext(), cfg)
+    press.RunPressCMD(ctx, cfg)
 }
