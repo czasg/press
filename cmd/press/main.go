@@ -13,40 +13,15 @@ import (
 func CreateYaml() {
     f, err := os.Create("press.yaml")
     if err != nil {
+        log.Printf("初始化yaml文件异常：%v", err)
         return
     }
     defer f.Close()
-    f.WriteString(`---
-version: "1"
-metadata:
-  name: "press"
-steps:
-  - name: "压力测试"
-    logInterval: 1
-    threadGroup:
-      thread: 2
-      threadRampUp: 1
-      duration: 10
-    http:
-      url: "http://www.baidu.com"
-      method: "POST"
-      headers:
-        content-type: "application/json"
-      body: |
-        {
-          "hello":"press"
-        }
-    assert:
-      statusCode: 200
-      headers:
-        - cookie: ""
-      body: ""
-#      jsonMap:
-#        - key1: 1
-#        - key2: 2
-#    output:
-#      path: "."
-`)
+    _, err = f.WriteString(press.TemplateV1)
+    if err != nil {
+        log.Printf("初始化yaml内容异常：%v", err)
+        return
+    }
 }
 
 func NewSignalContext() context.Context {

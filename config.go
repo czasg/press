@@ -35,6 +35,7 @@ type ThreadGroup struct {
 type Http struct {
     Url     string            `yaml:"url"`
     Method  string            `yaml:"method"`
+    Timeout int               `yaml:"timeout"`
     Headers map[string]string `yaml:"headers"`
     Body    string            `yaml:"body"`
 }

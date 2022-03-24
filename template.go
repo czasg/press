@@ -1,12 +1,9 @@
-package basis
+package press
 
-var TemplateV1 = `
+var TemplateV1 = `---
 version: "1"
 metadata:
   name: "press"
-  gRPCServer:
-	- localhost:8000
-	- localhost:8001
 steps:
   - name: "压力测试"
     logInterval: 1
@@ -26,12 +23,12 @@ steps:
         }
     assert:
       statusCode: 200
-      headers:
-        - cookie: ""
-      body: ""
-#      jsonMap:
-#        - key1: 1
-#        - key2: 2
+#      headers:
+#        - auth: "authKey"
+#      body: ""
+#      jsonMap:  # 仅支持获取 Map 第一层
+#        - errCode: 0
+#        - status: true
 #    output:
 #      path: "."
 `

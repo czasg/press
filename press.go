@@ -30,9 +30,10 @@ func RunPressV1(ctx context.Context, cfg *Config) {
                 client := &http.Client{
                     Transport: &http.Transport{
                         DialContext: (&net.Dialer{
-                            KeepAlive: time.Hour * 24,
+                            KeepAlive: time.Second * time.Duration(step.ThreadGroup.Duration+1),
                         }).DialContext,
                     },
+                    Timeout: time.Second * time.Duration(step.Http.Timeout),
                 }
             LOOP:
                 for {
