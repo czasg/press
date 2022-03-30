@@ -1,5 +1,11 @@
 package press
 
+import (
+	"fmt"
+	"log"
+	"os"
+)
+
 var TemplateV1 = `---
 version: "1"
 metadata:
@@ -32,3 +38,17 @@ steps:
 #    output:
 #      path: "."
 `
+
+func CreateYaml(filename string) error {
+	f, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("初始化 yaml 文件异常：%v\n", err)
+	}
+	defer f.Close()
+	_, err = f.WriteString(TemplateV1)
+	if err != nil {
+		return fmt.Errorf("初始化 yaml 内容异常：%v\n", err)
+	}
+	log.Printf("初始化 yaml 成功\n")
+	return nil
+}
