@@ -32,6 +32,7 @@ func runPressHttp(ctx context.Context, step Steps) {
     ctxTime, _ := context.WithTimeout(ctx, time.Duration(step.ThreadGroup.Duration)*time.Second)
     stat := NewStat(step)
     press := func() {
+        stat.RecordThread()
         client := &http.Client{
             Transport: &http.Transport{
                 DialContext: (&net.Dialer{
@@ -54,59 +55,59 @@ func runPressHttp(ctx context.Context, step Steps) {
             start := time.Now()
             resp, err := client.Do(req)
             if err != nil {
-                stat.RecordKill()
+                stat.RecordError()
                 continue
             }
             stat.RecordResponseTime(start)
             body, err := ioutil.ReadAll(resp.Body)
             if err != nil {
-                stat.RecordKill()
+                stat.RecordError()
                 continue
             }
             _ = resp.Body.Close()
             if step.Assert.StatusCode > 0 && resp.StatusCode != step.Assert.StatusCode {
-                stat.RecordKill()
+                stat.RecordError()
                 continue
             }
             if len(step.Assert.Headers) > 0 {
                 for _, header := range step.Assert.Headers {
                     for k, v := range header {
                         if resp.Header.Get(k) != v {
-                            stat.RecordKill()
+                            stat.RecordError()
                             goto LOOP
                         }
                     }
                 }
             }
             if step.Assert.Body != "" && string(body) != step.Assert.Body {
-                stat.RecordKill()
+                stat.RecordError()
                 continue
             }
             if len(step.Assert.JsonMap) > 0 {
                 var m map[string]interface{}
                 err := json.Unmarshal(body, &m)
                 if err != nil {
-                    stat.RecordKill()
+                    stat.RecordError()
                     continue
                 }
                 for _, jsonMap := range step.Assert.JsonMap {
                     for k, v := range jsonMap {
                         v1, ok := m[k]
                         if !ok {
-                            stat.RecordKill()
+                            stat.RecordError()
                             goto LOOP
                         }
                         if !strings.EqualFold(
                             fmt.Sprintf("%v", v),
                             fmt.Sprintf("%v", v1),
                         ) {
-                            stat.RecordKill()
+                            stat.RecordError()
                             goto LOOP
                         }
                     }
                 }
             }
-            stat.RecordOK()
+            stat.RecordSuccess()
         }
     }
     go func() {

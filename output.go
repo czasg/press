@@ -14,27 +14,34 @@ type Stat struct {
     lock              sync.Mutex
     once              sync.Once
     TotalRequests     int64
-    Count             int64
-    OkQPS             int64
-    Ok                int64
-    Kill              int64
+    StatCount         int64
+    Throughput        int64
+    SuccessRequests   int64
+    ErrorRequests     int64
     MinResponseTime   int64
     MaxResponseTime   int64
     TotalResponseTime int64
+    Threads           int64
 }
 
-func (this *Stat) RecordOK() {
+func (this *Stat) RecordSuccess() {
     this.lock.Lock()
     this.TotalRequests++
-    this.OkQPS++
-    this.Ok++
+    this.Throughput++
+    this.SuccessRequests++
     this.lock.Unlock()
 }
 
-func (this *Stat) RecordKill() {
+func (this *Stat) RecordError() {
     this.lock.Lock()
     this.TotalRequests++
-    this.Kill++
+    this.ErrorRequests++
+    this.lock.Unlock()
+}
+
+func (this *Stat) RecordThread() {
+    this.lock.Lock()
+    this.Threads++
     this.lock.Unlock()
 }
 
@@ -58,20 +65,21 @@ func (this *Stat) RecordResponseTime(start time.Time) {
 
 func (this *Stat) String() string {
     this.lock.Lock()
-    this.Count++
+    this.StatCount++
     record := Record{
         RecordTime:      time.Now(),
         TotalRequests:   this.TotalRequests,
-        CurrentQPS:      this.OkQPS,
-        MeanQPS:         this.Ok / this.Count,
-        KillRequests:    this.Kill,
+        Throughput:      this.Throughput,
+        MeanThroughput:  this.SuccessRequests / this.StatCount,
+        ErrorRequests:   this.ErrorRequests,
         MinResponseTime: this.MinResponseTime,
         MaxResponseTime: this.MaxResponseTime,
+        Threads:         this.Threads,
     }
     if this.TotalRequests > 0 {
         record.MeanResponseTime = this.TotalResponseTime / this.TotalRequests
     }
-    this.OkQPS = 0
+    this.Throughput = 0
     this.lock.Unlock()
     this.Save(record)
     return record.String()
@@ -83,23 +91,25 @@ func (this *Stat) Save(record Record) {
 type Record struct {
     RecordTime       time.Time
     TotalRequests    int64
-    CurrentQPS       int64
-    MeanQPS          int64
-    KillRequests     int64
+    Throughput       int64
+    MeanThroughput   int64
+    ErrorRequests    int64
     MinResponseTime  int64
     MaxResponseTime  int64
     MeanResponseTime int64
+    Threads          int64
 }
 
 func (this Record) String() string {
     return fmt.Sprintf(
-        "瞬时[%v]QPS 平均[%v]QPS 平均响应[%v]ms 最小/大响应[%v/%v]ms  总请求次数[%v] 错误次数[%v]",
-        this.CurrentQPS,
-        this.MeanQPS,
+        "瞬时[%v]QPS 平均[%v]QPS 平均响应[%v]ms 最小/大响应[%v/%v]ms 总请求次数[%v] 错误次数[%v] 线程数[%v]",
+        this.Throughput,
+        this.MeanThroughput,
         this.MeanResponseTime,
         this.MinResponseTime,
         this.MaxResponseTime,
         this.TotalRequests,
-        this.KillRequests,
+        this.ErrorRequests,
+        this.Threads,
     )
 }
