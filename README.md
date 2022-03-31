@@ -1,16 +1,14 @@
 # press
 
-基于 go 实现的压力测试工具。
-
-优点：     
-1、提供了较友好的 yaml 配置模板，可读与可配置性更强。     
-2、简单易上手。   
-
+基于 go 实现的压力测试工具。     
 安装方法
 ```shell script
 go install github.com/czasg/press/cmd/press@latest
 ```
 
+优点：     
+1、提供了较友好的 yaml 配置模板，可读与可配置性更强。     
+2、简单易上手。  
 
 ## 快速开始
 1、初始化 yaml 模板
