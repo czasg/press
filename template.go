@@ -1,9 +1,10 @@
 package press
 
 import (
-	"fmt"
-	"log"
-	"os"
+    "fmt"
+    "log"
+    "os"
+    "path/filepath"
 )
 
 var TemplateV1 = `---
@@ -40,15 +41,20 @@ steps:
 `
 
 func CreateYaml(filename string) error {
-	f, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("初始化 yaml 文件异常：%v\n", err)
-	}
-	defer f.Close()
-	_, err = f.WriteString(TemplateV1)
-	if err != nil {
-		return fmt.Errorf("初始化 yaml 内容异常：%v\n", err)
-	}
-	log.Printf("初始化 yaml 成功\n")
-	return nil
+    filename, err := filepath.Abs(filename)
+    if err != nil {
+        return fmt.Errorf("初始化 yaml 异常：%v\n", err)
+    }
+    f, err := os.Create(filename)
+    if err != nil {
+        return fmt.Errorf("初始化 yaml 文件异常：%v\n", err)
+    }
+    defer f.Close()
+    _, err = f.WriteString(TemplateV1)
+    if err != nil {
+        return fmt.Errorf("初始化 yaml 内容异常：%v\n", err)
+    }
+    log.Printf("生成文件[%v]\n", filename)
+    log.Println("初始化 yaml 成功")
+    return nil
 }
