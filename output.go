@@ -1,13 +1,38 @@
 package press
 
 import (
+    "encoding/json"
     "fmt"
+    "log"
+    "os"
+    "path/filepath"
     "sync"
     "time"
 )
 
 func NewStat(step Steps) *Stat {
-    return &Stat{}
+    stat := &Stat{}
+    if step.Output.Path != "" {
+        result := filepath.Join(step.Output.Path, fmt.Sprintf("%v.press", step.Name))
+        f, err := createFile(result)
+        if err != nil {
+            log.Fatalln(err)
+        }
+        stat.OutputFile = f
+    }
+    return stat
+}
+
+func createFile(filename string) (*os.File, error) {
+    _, err := os.Stat(filename)
+    if err == nil || os.IsExist(err) {
+        return createFile(fmt.Sprintf("%v.%v", filename, time.Now().Unix()))
+    }
+    f, err := os.Create(filename)
+    if err != nil {
+        return nil, fmt.Errorf("创建文件[%s]异常: %v", filename, err)
+    }
+    return f, nil
 }
 
 type Stat struct {
@@ -22,6 +47,7 @@ type Stat struct {
     MaxResponseTime   int64
     TotalResponseTime int64
     Threads           int64
+    OutputFile        *os.File
 }
 
 func (this *Stat) RecordSuccess() {
@@ -86,6 +112,12 @@ func (this *Stat) String() string {
 }
 
 func (this *Stat) Save(record Record) {
+    if this.OutputFile == nil {
+        return
+    }
+    body, _ := json.Marshal(record)
+    _, _ = this.OutputFile.Write(body)
+    _, _ = this.OutputFile.WriteString("\n")
 }
 
 type Record struct {

@@ -31,6 +31,11 @@ func RunPressCMD(ctx context.Context, cfg *Config) {
 func runPressHttp(ctx context.Context, step Steps) {
     ctxTime, _ := context.WithTimeout(ctx, time.Duration(step.ThreadGroup.Duration)*time.Second)
     stat := NewStat(step)
+    defer func() {
+        if stat.OutputFile != nil {
+            stat.OutputFile.Close()
+        }
+    }()
     press := func() {
         stat.RecordThread()
         client := &http.Client{
