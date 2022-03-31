@@ -3,6 +3,7 @@ package cmd
 import (
     "context"
     "errors"
+    "fmt"
     "github.com/czasg/press"
     "github.com/spf13/cobra"
     "log"
@@ -70,13 +71,18 @@ func InstallStartCommand(cmd *cobra.Command) {
 func InstallTestCommand(cmd *cobra.Command) {
     step := press.Steps{Name: "press test"}
     testCmd := &cobra.Command{
-        Use:   "test",
+        Use:   "test [url]",
         Short: "a short press test",
-        Long:  `start a short press test with flags`,
+        Long:  `start a short press test with flags. like press test hostname`,
         RunE: func(cmd *cobra.Command, args []string) error {
-            if step.Http.Url == "" {
+            if len(args) < 1 {
                 return errors.New("url不能为空")
             }
+            url := args[0]
+            if !strings.HasPrefix(url, "http") {
+                url = fmt.Sprintf("http://%s", url)
+            }
+            step.Http.Url = url
             headers, err := cmd.Flags().GetStringArray("header")
             if err != nil {
                 return err
@@ -111,7 +117,6 @@ func InstallTestCommand(cmd *cobra.Command) {
         cf.IntVar(&step.ThreadGroup.ThreadRampUp, "ramp", 1, "press threads ramp-up")
     }
     {
-        cf.StringVar(&step.Http.Url, "url", "", "http requests url")
         cf.StringVar(&step.Http.Method, "method", "GET", "http requests method, like GET,POST")
         cf.IntVar(&step.Http.Timeout, "timeout", 1, "http requests timeout")
         cf.StringVar(&step.Http.Body, "body", "", "http requests body")
