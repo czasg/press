@@ -12,6 +12,7 @@ func NewStat(step Steps) *Stat {
 
 type Stat struct {
     lock              sync.Mutex
+    once              sync.Once
     TotalRequests     int64
     Count             int64
     OkQPS             int64
@@ -40,9 +41,11 @@ func (this *Stat) RecordKill() {
 func (this *Stat) RecordResponseTime(start time.Time) {
     this.lock.Lock()
     responseTime := time.Since(start).Milliseconds()
-    if this.MinResponseTime == 0 {
-        this.MinResponseTime = responseTime
-    }
+    this.once.Do(func() {
+        if this.MinResponseTime == 0 {
+            this.MinResponseTime = responseTime
+        }
+    })
     if responseTime < this.MinResponseTime {
         this.MinResponseTime = responseTime
     }

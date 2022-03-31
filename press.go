@@ -121,16 +121,17 @@ func runPressHttp(ctx context.Context, step Steps) {
             }
         }
     }()
+    var statLog = stat.String()
+    second := time.NewTicker(time.Second)
     interval := time.NewTicker(time.Second * time.Duration(step.LogInterval))
     for {
         select {
         case <-ctxTime.Done():
             return
+        case <-second.C:
+            statLog = stat.String()
         case <-interval.C:
-            log.Println(stat.String())
-        default:
-            _ = stat.String()
+            log.Println(statLog)
         }
-        time.Sleep(time.Second)
     }
 }
