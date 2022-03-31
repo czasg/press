@@ -20,14 +20,14 @@ steps:
       duration: 10
     http:
       url: "http://www.baidu.com"
-      method: "POST"
+      method: "GET"
       timeout: 10
-      headers:
-        content-type: "application/json"
-      body: |
-        {
-          "hello":"press"
-        }
+#      headers:
+#        content-type: "application/json"
+#      body: |
+#        {
+#          "hello":"press"
+#        }
     assert:
       statusCode: 200
 #      headers:
