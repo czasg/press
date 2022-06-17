@@ -14,12 +14,6 @@ import (
     "time"
 )
 
-func logInterval() {
-    for i := 0; i < 10; i++ {
-        logrus.Info("#########################")
-    }
-}
-
 func RunPressCMD(ctx context.Context, cfg *Config) {
     logrus.WithField("Version", cfg.Version).Info("检测到当前版本")
     logrus.WithField("User", cfg.Metadata.Name).Info("检测到当前用户")
