@@ -5,6 +5,7 @@ import (
     "context"
     "encoding/json"
     "fmt"
+    "github.com/sirupsen/logrus"
     "io/ioutil"
     "log"
     "net"
@@ -13,19 +14,29 @@ import (
     "time"
 )
 
+func logInterval() {
+    for i := 0; i < 10; i++ {
+        logrus.Info("#########################")
+    }
+}
+
 func RunPressCMD(ctx context.Context, cfg *Config) {
-    log.Printf("当前版本：%v\n", cfg.Version)
-    log.Printf("当前用户：%v\n", cfg.Metadata.Name)
+    logrus.WithField("Version", cfg.Version).Info("检测到当前版本")
+    logrus.WithField("User", cfg.Metadata.Name).Info("检测到当前用户")
     for index, step := range cfg.Steps {
-        log.Printf("----- 任务[%v]开始 -----\n", index)
-        log.Printf("名称：%v\n", step.Name)
-        log.Printf("线程数：%v\n", step.ThreadGroup.Thread)
-        log.Printf("线程唤醒时间：%vs\n", step.ThreadGroup.ThreadRampUp)
-        log.Printf("持续时间：%vs\n", step.ThreadGroup.Duration)
-        log.Printf("日志输出间隔：%vs\n", step.LogInterval)
+        logrus.Info("#########################")
+        logrus.Printf("###### 任务[%v]开始 ######", index)
+        logrus.Info("#########################")
+        logrus.Printf("名称：%v", step.Name)
+        logrus.Printf("线程数：%v", step.ThreadGroup.Thread)
+        logrus.Printf("线程唤醒时间：%vs", step.ThreadGroup.ThreadRampUp)
+        logrus.Printf("持续时间：%vs", step.ThreadGroup.Duration)
+        logrus.Printf("日志输出间隔：%vs", step.LogInterval)
         runPressHttp(ctx, step)
     }
-    log.Printf("----- 压测结束 -----\n")
+    logrus.Info("##########################")
+    logrus.Info("###### 压力测试结束 ######")
+    logrus.Info("##########################")
 }
 
 func runPressHttp(ctx context.Context, step Steps) {

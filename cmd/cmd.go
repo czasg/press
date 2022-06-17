@@ -64,7 +64,7 @@ func InstallStartCommand(cmd *cobra.Command) {
         },
     }
     cf := startCmd.Flags()
-    cf.StringVarP(&file, "file", "f", "", "a press test template file")
+    cf.StringVarP(&file, "file", "f", "", "压力测试模板文件")
     cmd.AddCommand(startCmd)
 }
 

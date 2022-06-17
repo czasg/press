@@ -2,9 +2,9 @@ package press
 
 import (
     "fmt"
+    "github.com/sirupsen/logrus"
     "gopkg.in/yaml.v2"
     "io/ioutil"
-    "log"
     "os"
     "path/filepath"
 )
@@ -58,7 +58,7 @@ func ParseConfig(file string, cfg *Config) error {
     if err != nil {
         return fmt.Errorf("检测配置文件异常：%v", err)
     }
-    log.Printf("检测到配置文件: %s\n", file)
+    logrus.WithField("ConfigFile", file).Info("检测到配置文件")
     f, err := os.Open(file)
     if err != nil {
         return fmt.Errorf("打开配置文件异常：%v", err)
