@@ -35,7 +35,7 @@ func InitCobraCmd() *cobra.Command {
 func NewPressCommand() *cobra.Command {
     cmd := &cobra.Command{
         Use:  "press",
-        Long: "press test tool",
+        Long: "压力测试工具",
         CompletionOptions: cobra.CompletionOptions{
             DisableDefaultCmd: true,
         },
@@ -47,8 +47,8 @@ func InstallStartCommand(cmd *cobra.Command) {
     var file string
     startCmd := &cobra.Command{
         Use:   "start",
-        Short: "start a press test",
-        Long:  `start a press test with template file`,
+        Short: "启动压力测试",
+        Long:  `基于模板创建压力测试`,
         RunE: func(cmd *cobra.Command, args []string) error {
             var cfg press.Config
             if file == "" {
@@ -72,8 +72,8 @@ func InstallTestCommand(cmd *cobra.Command) {
     step := press.Steps{Name: "press test"}
     testCmd := &cobra.Command{
         Use:   "test [url]",
-        Short: "a short press test",
-        Long:  `start a short press test with flags. like press test hostname`,
+        Short: "快速测试",
+        Long:  `基于指令的快速压力测试`,
         RunE: func(cmd *cobra.Command, args []string) error {
             if len(args) < 1 {
                 return errors.New("url不能为空")
@@ -109,21 +109,21 @@ func InstallTestCommand(cmd *cobra.Command) {
     }
     cf := testCmd.Flags()
     {
-        cf.IntVar(&step.LogInterval, "interval", 1, "log output interval")
+        cf.IntVar(&step.LogInterval, "interval", 1, "日志间隔")
     }
     {
-        cf.IntVar(&step.ThreadGroup.Thread, "thread", 1, "press threads")
-        cf.IntVar(&step.ThreadGroup.Duration, "duration", 10, "press duration")
-        cf.IntVar(&step.ThreadGroup.ThreadRampUp, "ramp", 1, "press threads ramp-up")
+        cf.IntVar(&step.ThreadGroup.Thread, "thread", 1, "线程数")
+        cf.IntVar(&step.ThreadGroup.Duration, "duration", 10, "压力测试持续时间")
+        cf.IntVar(&step.ThreadGroup.ThreadRampUp, "ramp", 1, "线程唤醒时间")
     }
     {
-        cf.StringVar(&step.Http.Method, "method", "GET", "http requests method, like GET,POST")
-        cf.IntVar(&step.Http.Timeout, "timeout", 1, "http requests timeout")
-        cf.StringVar(&step.Http.Body, "body", "", "http requests body")
-        cf.StringArray("header", []string{}, "http requests headers, like content-type:application/json")
+        cf.StringVar(&step.Http.Method, "method", "GET", "HTTP 请求方式")
+        cf.IntVar(&step.Http.Timeout, "timeout", 1, "HTTP 请求超时时间")
+        cf.StringVar(&step.Http.Body, "body", "", "HTTP 请求体")
+        cf.StringArray("header", []string{}, "HTTP 请求头")
     }
     {
-        cf.IntVar(&step.Assert.StatusCode, "statuscode", 200, "assert http response statuscode")
+        cf.IntVar(&step.Assert.StatusCode, "statuscode", 200, "断言状态码")
     }
     cmd.AddCommand(testCmd)
 }
@@ -132,13 +132,13 @@ func InstallInitCommand(cmd *cobra.Command) {
     var file string
     initCmd := &cobra.Command{
         Use:   "init",
-        Short: "initialize template file",
-        Long:  `create a template if not exists`,
+        Short: "初始化模板文件",
+        Long:  `快速初始化一个压力测试模板文件`,
         RunE: func(cmd *cobra.Command, args []string) error {
             return press.CreateYaml(file)
         },
     }
     cf := initCmd.Flags()
-    cf.StringVarP(&file, "file", "f", "press.yaml", "init a press test template file")
+    cf.StringVarP(&file, "file", "f", "press.yaml", "压力测试模板")
     cmd.AddCommand(initCmd)
 }
