@@ -2,7 +2,7 @@ package press
 
 import (
     "fmt"
-    "log"
+    "github.com/sirupsen/logrus"
     "os"
     "path/filepath"
 )
@@ -54,7 +54,7 @@ func CreateYaml(filename string) error {
     if err != nil {
         return fmt.Errorf("初始化 yaml 内容异常：%v\n", err)
     }
-    log.Printf("生成文件[%v]\n", filename)
-    log.Println("初始化 yaml 成功")
+    logrus.Printf("生成文件[%v]", filename)
+    logrus.Println("初始化 yaml 成功")
     return nil
 }
