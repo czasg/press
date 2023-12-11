@@ -6,6 +6,17 @@ import (
 	"time"
 )
 
+type IStat interface {
+	RecordSuccess()
+	RecordFailure()
+	RecordThread()
+	RecordTime(startTime time.Time)
+	RecordThroughput(startTime time.Time)
+	Info() StatInfo
+}
+
+type StatInfo struct{}
+
 type PressStat struct {
 	Lock                        sync.Mutex
 	Once                        sync.Once
@@ -42,7 +53,7 @@ func (p *PressStat) RecordThread() {
 	p.Lock.Unlock()
 }
 
-func (p *PressStat) RecordResponseTime(startTime time.Time) {
+func (p *PressStat) RecordTime(startTime time.Time) {
 	p.Lock.Lock()
 	responseTime := time.Since(startTime).Milliseconds()
 	p.Once.Do(func() {
@@ -57,6 +68,12 @@ func (p *PressStat) RecordResponseTime(startTime time.Time) {
 	}
 	p.TotalResponseTime += responseTime
 	p.Lock.Unlock()
+}
+
+func (p *PressStat) RecordThroughput(startTime time.Time) {
+	p.Lock.Lock()
+	defer p.Lock.Unlock()
+	p.Throughput = int64(float64(p.Throughput) / float64(time.Since(p.ThroughputLastCalculateTime).Milliseconds()) * 1000)
 }
 
 func (p *PressStat) Log() {

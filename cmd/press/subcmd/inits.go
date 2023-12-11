@@ -22,8 +22,11 @@ func NewPressInitCommand(ctx context.Context) *cobra.Command {
 	flag := PressInitCommandFlag{}
 	initCmd := &cobra.Command{
 		Use:   "init",
-		Short: "初始化模板文件",
-		Long:  `快速初始化一个压力测试模板文件`,
+		Short: "init a press template yaml",
+		Long: `init a press template yaml, version list:
+- 1: single pressure test.
+- 2: cluster pressure test.
+`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logs := logrus.WithFields(logrus.Fields{
 				"version": flag.Version,
@@ -34,12 +37,12 @@ func NewPressInitCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				logs.Infof("修正文件绝对路径[%s]->[%s]", flag.File, filename)
+				logs.Infof("fixed file absolute filepath [%s]->[%s]", flag.File, filename)
 				flag.File = filename
 			}
 			if !flag.AutoConfirm && utils.FileExist(flag.File) {
-				logrus.Println("文件已存在，是否要覆盖?")
-				fmt.Print("请确认(y/n): ")
+				logrus.Println("file already exists, override?")
+				fmt.Print("please(y/n): ")
 				var input string
 				_, err := fmt.Scanln(&input)
 				if err != nil {
@@ -53,7 +56,7 @@ func NewPressInitCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logs.Info("初始化文件...")
+			logs.Info("init file...")
 			f, err := os.Create(flag.File)
 			if err != nil {
 				return err
@@ -63,19 +66,19 @@ func NewPressInitCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logs.Info("初始化成功")
+			logs.Info("init success!")
 			return nil
 		},
 	}
 	flags := initCmd.Flags()
 	{
-		flags.StringVarP(&flag.File, "file", "f", "press.yaml", "文件名")
+		flags.StringVarP(&flag.File, "file", "f", "press.yaml", "filename")
 	}
 	{
-		flags.StringVarP(&flag.Version, "version", "v", "latest", "版本号")
+		flags.StringVarP(&flag.Version, "version", "v", "1", "yaml version")
 	}
 	{
-		flags.BoolVarP(&flag.AutoConfirm, "auto-confirm", "y", false, "自动确认")
+		flags.BoolVarP(&flag.AutoConfirm, "auto-confirm", "y", false, "auto confirm `yes` if file exists.")
 	}
 	return initCmd
 }

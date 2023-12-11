@@ -2,7 +2,7 @@ package yamltemplate
 
 import "gopkg.in/yaml.v2"
 
-func NewTemplateV1() string {
+func NewTemplateV2() string {
 	return `---
 version: "1.0"
 metadata:
@@ -41,8 +41,8 @@ steps:
 `
 }
 
-func ParseConfigV1(body []byte) (*ConfigV1, error) {
-	cfg := ConfigV1{}
+func ParseConfigV2(body []byte) (*ConfigV2, error) {
+	cfg := ConfigV2{}
 	err := yaml.Unmarshal(body, &cfg)
 	if err != nil {
 		return nil, err
@@ -50,39 +50,39 @@ func ParseConfigV1(body []byte) (*ConfigV1, error) {
 	return &cfg, nil
 }
 
-type ConfigV1 struct {
+type ConfigV2 struct {
 	Version  string     `json:"version" yaml:"version"`
-	Metadata MetadataV1 `json:"metadata" yaml:"metadata"`
-	Steps    []StepsV1  `json:"steps" yaml:"steps"`
+	Metadata MetadataV2 `json:"metadata" yaml:"metadata"`
+	Steps    []StepsV2  `json:"steps" yaml:"steps"`
 }
-type MetadataV1 struct {
+type MetadataV2 struct {
 	Name          string         `json:"name" yaml:"name"`
 	ClusterEnable bool           `json:"clusterEnable" yaml:"clusterEnable"`
-	ClusterRedis  ClusterRedisV1 `json:"clusterRedis" yaml:"clusterRedis"`
+	ClusterRedis  ClusterRedisV2 `json:"clusterRedis" yaml:"clusterRedis"`
 }
 
-type ClusterRedisV1 struct {
+type ClusterRedisV2 struct {
 	Host string `json:"host" yaml:"host"`
 	Port int    `json:"port" yaml:"port"`
 	DB   int    `json:"db" yaml:"db"`
 	Pwd  string `json:"pwd" yaml:"pwd"`
 }
 
-type StepsV1 struct {
+type StepsV2 struct {
 	Name        string        `json:"name" yaml:"name"`
 	LogInterval int           `json:"logInterval" yaml:"logInterval"`
-	ThreadGroup ThreadGroupV1 `json:"threadGroup" yaml:"threadGroup"`
-	Http        HttpV1        `json:"http" yaml:"http"`
-	Assert      AssertV1      `json:"assert" yaml:"assert"`
+	ThreadGroup ThreadGroupV2 `json:"threadGroup" yaml:"threadGroup"`
+	Http        HttpV2        `json:"http" yaml:"http"`
+	Assert      AssertV2      `json:"assert" yaml:"assert"`
 }
 
-type ThreadGroupV1 struct {
+type ThreadGroupV2 struct {
 	Thread       int `json:"thread" yaml:"thread"`
 	ThreadRampUp int `json:"threadRampUp" yaml:"threadRampUp"`
 	Duration     int `json:"duration" yaml:"duration"`
 }
 
-type HttpV1 struct {
+type HttpV2 struct {
 	Url     string            `json:"url" yaml:"url"`
 	Method  string            `json:"method" yaml:"method"`
 	Timeout int               `json:"timeout" yaml:"timeout"`
@@ -90,7 +90,7 @@ type HttpV1 struct {
 	Body    string            `json:"body" yaml:"body"`
 }
 
-type AssertV1 struct {
+type AssertV2 struct {
 	StatusCode int                      `json:"statusCode" yaml:"statusCode"`
 	Headers    []map[string]string      `json:"headers" yaml:"headers"`
 	Body       string                   `json:"body" yaml:"body"`
