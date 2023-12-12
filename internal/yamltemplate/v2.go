@@ -21,7 +21,7 @@ steps:
       threadRampUp: 1
       duration: 10
     http:
-      url: "http://www.baidu.com"
+      url: "http://localhost:8080"
       method: "GET"
       timeout: 10
     #      headers:

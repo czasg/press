@@ -1,6 +1,18 @@
 package yamltemplate
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"net/http"
+)
+
+type AssertResponse func(response *http.Response) error
+
+var (
+	AssertStatusCodeError = errors.New("Assert Status Code Error")
+	AssertHeaderError     = errors.New("Assert Header Error")
+	AssertBodyError       = errors.New("Assert Body Error")
+)
 
 func GetTemplate(version string) (string, error) {
 	switch version {

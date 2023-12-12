@@ -1,6 +1,15 @@
 package yamltemplate
 
-import "gopkg.in/yaml.v2"
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"gopkg.in/yaml.v2"
+	"io"
+	"net/http"
+	"strings"
+)
 
 func NewTemplateV1() string {
 	return `---
@@ -15,7 +24,7 @@ steps:
       threadRampUp: 1
       duration: 10
     http:
-      url: "http://www.baidu.com"
+      url: "http://localhost:8080"
       method: "GET"
       timeout: 10
     #      headers:
@@ -33,15 +42,6 @@ steps:
 #        - errCode: 0
 #        - status: true
 `
-}
-
-func ParseConfigV1(body []byte) (*ConfigV1, error) {
-	cfg := ConfigV1{}
-	err := yaml.Unmarshal(body, &cfg)
-	if err != nil {
-		return nil, err
-	}
-	return &cfg, nil
 }
 
 type ConfigV1 struct {
@@ -75,9 +75,73 @@ type HttpV1 struct {
 	Body    string            `json:"body" yaml:"body"`
 }
 
+func (h *HttpV1) NewRequest(ctx context.Context) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, h.Method, h.Url, bytes.NewBufferString(h.Body))
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range h.Headers {
+		req.Header.Add(k, v)
+	}
+	return req, nil
+}
+
 type AssertV1 struct {
 	StatusCode int                      `json:"statusCode" yaml:"statusCode"`
 	Headers    []map[string]string      `json:"headers" yaml:"headers"`
 	Body       string                   `json:"body" yaml:"body"`
 	JsonMap    []map[string]interface{} `json:"jsonMap" yaml:"jsonMap"`
+}
+
+func (a *AssertV1) NewAssert() AssertResponse {
+	return func(response *http.Response) error {
+		if a.StatusCode > 0 && response.StatusCode != a.StatusCode {
+			return AssertStatusCodeError
+		}
+		for _, headers := range a.Headers {
+			for k, v := range headers {
+				if !strings.EqualFold(response.Header.Get(k), v) {
+					return AssertHeaderError
+				}
+			}
+		}
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			return err
+		}
+		if a.Body != "" && a.Body != string(body) {
+			return AssertBodyError
+		}
+		if len(a.JsonMap) < 1 {
+			return nil
+		}
+		var m map[string]interface{}
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			return err
+		}
+		for _, jsonMap := range a.JsonMap {
+			for k, v := range jsonMap {
+				v1, ok := m[k]
+				if !ok {
+					return AssertBodyError
+				}
+				if !strings.EqualFold(
+					fmt.Sprintf("%v", v), fmt.Sprintf("%v", v1),
+				) {
+					return AssertBodyError
+				}
+			}
+		}
+		return nil
+	}
+}
+
+func ParseConfigV1(body []byte) (*ConfigV1, error) {
+	cfg := ConfigV1{}
+	err := yaml.Unmarshal(body, &cfg)
+	if err != nil {
+		return nil, err
+	}
+	return &cfg, nil
 }
