@@ -24,6 +24,7 @@ steps:
       url: "http://localhost:8080"
       method: "GET"
       timeout: 10
+      keepalive: false
     #      headers:
     #        content-type: "application/json"
     #      body: |
@@ -83,11 +84,12 @@ type ThreadGroupV2 struct {
 }
 
 type HttpV2 struct {
-	Url     string            `json:"url" yaml:"url"`
-	Method  string            `json:"method" yaml:"method"`
-	Timeout int               `json:"timeout" yaml:"timeout"`
-	Headers map[string]string `json:"headers" yaml:"headers"`
-	Body    string            `json:"body" yaml:"body"`
+	Url       string            `json:"url" yaml:"url"`
+	Method    string            `json:"method" yaml:"method"`
+	Timeout   int               `json:"timeout" yaml:"timeout"`
+	Keepalive bool              `json:"keepalive" yaml:"keepalive"`
+	Headers   map[string]string `json:"headers" yaml:"headers"`
+	Body      string            `json:"body" yaml:"body"`
 }
 
 type AssertV2 struct {

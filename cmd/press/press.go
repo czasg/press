@@ -27,7 +27,7 @@ func NewSignalContext() context.Context {
 	go func() {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
-		logrus.Warnf("检测到退出指令[%v]", <-ch)
+		logrus.Warnf("detected system exit signal: [%v]", <-ch)
 		cancel()
 	}()
 	return ctx
@@ -36,7 +36,7 @@ func NewSignalContext() context.Context {
 func NewPressCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:  "press",
-		Long: "压力测试工具",
+		Long: "press test tool",
 		CompletionOptions: cobra.CompletionOptions{
 			DisableDefaultCmd: true,
 		},

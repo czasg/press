@@ -1,9 +1,11 @@
 package yamltemplate
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type AssertResponse func(response *http.Response) error
@@ -23,4 +25,12 @@ func GetTemplate(version string) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupport version[%s]", version)
 	}
+}
+
+type IStep interface {
+	NewRequest(ctx context.Context) (*http.Request, error)
+	NewClient() *http.Client
+	NewAssert() AssertResponse
+	NewStopTimer() *time.Timer
+	NewIntervalTicker() *time.Ticker
 }

@@ -49,15 +49,11 @@ func (pm *PressManager) RunPressV1(ctx context.Context, step yamltemplate.StepsV
 	ctx1, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	client := &http.Client{
-		Transport: &http.Transport{
-			DisableKeepAlives: true,
-		},
-	}
 	req, err := step.Http.NewRequest(ctx1)
 	if err != nil {
 		return err
 	}
+	client := step.Http.NewClient(ctx1)
 	assert := step.Assert.NewAssert()
 
 	go func() {

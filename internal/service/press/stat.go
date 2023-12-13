@@ -19,8 +19,8 @@ type Snapshot struct {
 	Throughput               int64
 	ThroughputMean           int64
 	ResponseTimeMin          int64
-	ResponseTimeMax          int64
 	ResponseTimeMean         int64
+	ResponseTimeMax          int64
 	TotalFailureRequestCount int64
 	TotalRequestCount        int64
 	ThreadNum                int64
@@ -52,8 +52,8 @@ func (p *PressStat) Snapshot(t time.Time) Snapshot {
 		Throughput:               p.Throughput / time.Since(t).Milliseconds() * 1000,
 		ThroughputMean:           p.TotalSuccessRequestCount / p.TotalStatCount,
 		ResponseTimeMin:          p.MinResponseTime,
-		ResponseTimeMax:          p.MaxResponseTime,
 		ResponseTimeMean:         p.TotalResponseTime / p.TotalRequestCount,
+		ResponseTimeMax:          p.MaxResponseTime,
 		TotalFailureRequestCount: p.TotalFailureRequestCount,
 		TotalRequestCount:        p.TotalRequestCount,
 		ThreadNum:                p.ThreadNum,

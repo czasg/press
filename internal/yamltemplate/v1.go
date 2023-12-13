@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func NewTemplateV1() string {
@@ -27,6 +28,7 @@ steps:
       url: "http://localhost:8080"
       method: "GET"
       timeout: 10
+      keepalive: false
     #      headers:
     #        content-type: "application/json"
     #      body: |
@@ -61,6 +63,70 @@ type StepsV1 struct {
 	Assert      AssertV1      `json:"assert" yaml:"assert"`
 }
 
+func (s *StepsV1) NewRequest(ctx context.Context) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, s.Http.Method, s.Http.Url, bytes.NewBufferString(s.Http.Body))
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range s.Http.Headers {
+		req.Header.Add(k, v)
+	}
+	return req, nil
+}
+
+func (s *StepsV1) NewClient() *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: !s.Http.Keepalive,
+		},
+		Timeout: time.Second * time.Duration(s.Http.Timeout),
+	}
+}
+
+func (s *StepsV1) NewAssert() AssertResponse {
+	return func(response *http.Response) error {
+		if s.Assert.StatusCode > 0 && response.StatusCode != s.Assert.StatusCode {
+			return AssertStatusCodeError
+		}
+		for _, headers := range s.Assert.Headers {
+			for k, v := range headers {
+				if !strings.EqualFold(response.Header.Get(k), v) {
+					return AssertHeaderError
+				}
+			}
+		}
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			return err
+		}
+		if s.Assert.Body != "" && s.Assert.Body != string(body) {
+			return AssertBodyError
+		}
+		if len(s.Assert.JsonMap) < 1 {
+			return nil
+		}
+		var m map[string]interface{}
+		err = json.Unmarshal(body, &m)
+		if err != nil {
+			return err
+		}
+		for _, jsonMap := range s.Assert.JsonMap {
+			for k, v := range jsonMap {
+				v1, ok := m[k]
+				if !ok {
+					return AssertBodyError
+				}
+				if !strings.EqualFold(
+					fmt.Sprintf("%v", v), fmt.Sprintf("%v", v1),
+				) {
+					return AssertBodyError
+				}
+			}
+		}
+		return nil
+	}
+}
+
 type ThreadGroupV1 struct {
 	Thread       int `json:"thread" yaml:"thread"`
 	ThreadRampUp int `json:"threadRampUp" yaml:"threadRampUp"`
@@ -68,11 +134,12 @@ type ThreadGroupV1 struct {
 }
 
 type HttpV1 struct {
-	Url     string            `json:"url" yaml:"url"`
-	Method  string            `json:"method" yaml:"method"`
-	Timeout int               `json:"timeout" yaml:"timeout"`
-	Headers map[string]string `json:"headers" yaml:"headers"`
-	Body    string            `json:"body" yaml:"body"`
+	Url       string            `json:"url" yaml:"url"`
+	Method    string            `json:"method" yaml:"method"`
+	Timeout   int               `json:"timeout" yaml:"timeout"`
+	Keepalive bool              `json:"keepalive" yaml:"keepalive"`
+	Headers   map[string]string `json:"headers" yaml:"headers"`
+	Body      string            `json:"body" yaml:"body"`
 }
 
 func (h *HttpV1) NewRequest(ctx context.Context) (*http.Request, error) {
@@ -84,6 +151,15 @@ func (h *HttpV1) NewRequest(ctx context.Context) (*http.Request, error) {
 		req.Header.Add(k, v)
 	}
 	return req, nil
+}
+
+func (h *HttpV1) NewClient(ctx context.Context) *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: !h.Keepalive,
+		},
+		Timeout: time.Second * time.Duration(h.Timeout),
+	}
 }
 
 type AssertV1 struct {

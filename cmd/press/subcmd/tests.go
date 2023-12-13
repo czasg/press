@@ -29,7 +29,6 @@ func NewPressTestCommand(ctx context.Context) *cobra.Command {
 				url = fmt.Sprintf("http://%s", url)
 			}
 			step.Http.Url = url
-			fmt.Printf("%#v\n", step.Http)
 			headers, err := cmd.Flags().GetStringArray("header")
 			if err != nil {
 				return err
@@ -65,6 +64,7 @@ func NewPressTestCommand(ctx context.Context) *cobra.Command {
 	{
 		cf.StringVar(&step.Http.Method, "method", "GET", "HTTP 请求方式")
 		cf.IntVar(&step.Http.Timeout, "timeout", 24, "HTTP 请求超时时间")
+		cf.BoolVar(&step.Http.Keepalive, "keepalive", false, "HTTP Keepalive")
 		cf.StringVar(&step.Http.Body, "body", "", "HTTP 请求体")
 		cf.StringArray("header", []string{}, "HTTP 请求头")
 	}
