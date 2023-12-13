@@ -5,10 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -63,6 +65,15 @@ type StepsV1 struct {
 	Assert      AssertV1      `json:"assert" yaml:"assert"`
 }
 
+func (s *StepsV1) Print() {
+	logrus.Printf("Name：%v", s.Name)
+	logrus.Printf("Thread：%v", s.ThreadGroup.Thread)
+	logrus.Printf("ThreadRampUp：%vs", s.ThreadGroup.ThreadRampUp)
+	logrus.Printf("Duration：%vs", s.ThreadGroup.Duration)
+	logrus.Printf("LogInterval：%vs", s.LogInterval)
+	logrus.Printf("Url：%v", s.Http.Url)
+}
+
 func (s *StepsV1) NewRequest(ctx context.Context) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, s.Http.Method, s.Http.Url, bytes.NewBufferString(s.Http.Body))
 	if err != nil {
@@ -80,6 +91,32 @@ func (s *StepsV1) NewClient() *http.Client {
 			DisableKeepAlives: !s.Http.Keepalive,
 		},
 		Timeout: time.Second * time.Duration(s.Http.Timeout),
+	}
+}
+
+func (s *StepsV1) NewStopTimer() *time.Timer {
+	return time.NewTimer(time.Second * time.Duration(s.ThreadGroup.Duration))
+}
+
+func (s *StepsV1) NewIntervalTicker() *time.Ticker {
+	return time.NewTicker(time.Second * time.Duration(s.LogInterval))
+}
+
+func (s *StepsV1) NewThreadRampUp(ctx context.Context) func(thread func(ctx context.Context)) {
+	var once sync.Once
+	return func(thread func(ctx context.Context)) {
+		once.Do(func() {
+			interval := time.Second * time.Duration(s.ThreadGroup.ThreadRampUp) / time.Duration(s.ThreadGroup.Thread)
+			for i := 0; i < s.ThreadGroup.Thread; i++ {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					go thread(ctx)
+					time.Sleep(interval)
+				}
+			}
+		})
 	}
 }
 
@@ -133,6 +170,26 @@ type ThreadGroupV1 struct {
 	Duration     int `json:"duration" yaml:"duration"`
 }
 
+//func (t ThreadGroupV1) NewThreadRampUp(ctx context.Context) func(ctx context.Context, thread func()) {
+//	var once sync.Once
+//	return func(ctx context.Context, thread func()) {
+//		once.Do(func() {
+//			go func() {
+//				interval := time.Second * time.Duration(t.ThreadRampUp) / time.Duration(t.Thread)
+//				for i := 0; i < t.Thread; i++ {
+//					select {
+//					case <-ctx.Done():
+//						return
+//					default:
+//						go thread()
+//						time.Sleep(interval)
+//					}
+//				}
+//			}()
+//		})
+//	}
+//}
+
 type HttpV1 struct {
 	Url       string            `json:"url" yaml:"url"`
 	Method    string            `json:"method" yaml:"method"`
@@ -142,25 +199,25 @@ type HttpV1 struct {
 	Body      string            `json:"body" yaml:"body"`
 }
 
-func (h *HttpV1) NewRequest(ctx context.Context) (*http.Request, error) {
-	req, err := http.NewRequestWithContext(ctx, h.Method, h.Url, bytes.NewBufferString(h.Body))
-	if err != nil {
-		return nil, err
-	}
-	for k, v := range h.Headers {
-		req.Header.Add(k, v)
-	}
-	return req, nil
-}
+//func (h *HttpV1) NewRequest(ctx context.Context) (*http.Request, error) {
+//	req, err := http.NewRequestWithContext(ctx, h.Method, h.Url, bytes.NewBufferString(h.Body))
+//	if err != nil {
+//		return nil, err
+//	}
+//	for k, v := range h.Headers {
+//		req.Header.Add(k, v)
+//	}
+//	return req, nil
+//}
 
-func (h *HttpV1) NewClient(ctx context.Context) *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			DisableKeepAlives: !h.Keepalive,
-		},
-		Timeout: time.Second * time.Duration(h.Timeout),
-	}
-}
+//func (h *HttpV1) NewClient(ctx context.Context) *http.Client {
+//	return &http.Client{
+//		Transport: &http.Transport{
+//			DisableKeepAlives: !h.Keepalive,
+//		},
+//		Timeout: time.Second * time.Duration(h.Timeout),
+//	}
+//}
 
 type AssertV1 struct {
 	StatusCode int                      `json:"statusCode" yaml:"statusCode"`
@@ -169,49 +226,49 @@ type AssertV1 struct {
 	JsonMap    []map[string]interface{} `json:"jsonMap" yaml:"jsonMap"`
 }
 
-func (a *AssertV1) NewAssert() AssertResponse {
-	return func(response *http.Response) error {
-		if a.StatusCode > 0 && response.StatusCode != a.StatusCode {
-			return AssertStatusCodeError
-		}
-		for _, headers := range a.Headers {
-			for k, v := range headers {
-				if !strings.EqualFold(response.Header.Get(k), v) {
-					return AssertHeaderError
-				}
-			}
-		}
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			return err
-		}
-		if a.Body != "" && a.Body != string(body) {
-			return AssertBodyError
-		}
-		if len(a.JsonMap) < 1 {
-			return nil
-		}
-		var m map[string]interface{}
-		err = json.Unmarshal(body, &m)
-		if err != nil {
-			return err
-		}
-		for _, jsonMap := range a.JsonMap {
-			for k, v := range jsonMap {
-				v1, ok := m[k]
-				if !ok {
-					return AssertBodyError
-				}
-				if !strings.EqualFold(
-					fmt.Sprintf("%v", v), fmt.Sprintf("%v", v1),
-				) {
-					return AssertBodyError
-				}
-			}
-		}
-		return nil
-	}
-}
+//func (a *AssertV1) NewAssert() AssertResponse {
+//	return func(response *http.Response) error {
+//		if a.StatusCode > 0 && response.StatusCode != a.StatusCode {
+//			return AssertStatusCodeError
+//		}
+//		for _, headers := range a.Headers {
+//			for k, v := range headers {
+//				if !strings.EqualFold(response.Header.Get(k), v) {
+//					return AssertHeaderError
+//				}
+//			}
+//		}
+//		body, err := io.ReadAll(response.Body)
+//		if err != nil {
+//			return err
+//		}
+//		if a.Body != "" && a.Body != string(body) {
+//			return AssertBodyError
+//		}
+//		if len(a.JsonMap) < 1 {
+//			return nil
+//		}
+//		var m map[string]interface{}
+//		err = json.Unmarshal(body, &m)
+//		if err != nil {
+//			return err
+//		}
+//		for _, jsonMap := range a.JsonMap {
+//			for k, v := range jsonMap {
+//				v1, ok := m[k]
+//				if !ok {
+//					return AssertBodyError
+//				}
+//				if !strings.EqualFold(
+//					fmt.Sprintf("%v", v), fmt.Sprintf("%v", v1),
+//				) {
+//					return AssertBodyError
+//				}
+//			}
+//		}
+//		return nil
+//	}
+//}
 
 func ParseConfigV1(body []byte) (*ConfigV1, error) {
 	cfg := ConfigV1{}

@@ -28,9 +28,11 @@ func GetTemplate(version string) (string, error) {
 }
 
 type IStep interface {
+	Print()
 	NewRequest(ctx context.Context) (*http.Request, error)
 	NewClient() *http.Client
 	NewAssert() AssertResponse
 	NewStopTimer() *time.Timer
 	NewIntervalTicker() *time.Ticker
+	NewThreadRampUp(ctx context.Context) func(thread func(ctx context.Context))
 }

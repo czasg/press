@@ -47,6 +47,9 @@ type PressStat struct {
 func (p *PressStat) Snapshot(t time.Time) Snapshot {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
+	if p.TotalRequestCount < 1 {
+		return Snapshot{}
+	}
 	p.TotalStatCount++
 	return Snapshot{
 		Throughput:               p.Throughput / time.Since(t).Milliseconds() * 1000,
