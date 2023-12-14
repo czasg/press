@@ -35,14 +35,18 @@ func NewPressTestCommand(ctx context.Context) *cobra.Command {
 			}
 			step.Http.Headers = map[string]string{}
 			for _, header := range headers {
-				hs := strings.Split(header, ":")
+				hs := strings.Split(strings.TrimSpace(header), ":")
 				if len(hs) != 2 {
 					continue
 				}
-				step.Http.Headers[hs[0]] = hs[1]
+				step.Http.Headers[hs[0]] = strings.TrimSpace(hs[1])
 			}
-			return press.RunPressBySteps(ctx, []yamltemplate.IStep{
-				&step,
+			return press.RunPress(ctx, &yamltemplate.ConfigV1{
+				Version:  "1",
+				Metadata: yamltemplate.MetadataV1{Name: "press test"},
+				Steps: []yamltemplate.StepsV1{
+					step,
+				},
 			})
 		},
 	}

@@ -7,59 +7,49 @@ import (
 	"time"
 )
 
-func RunPress(ctx context.Context, cfg yamltemplate.IConfig) error {
-	switch cfg.GetVersion() {
-	case "1":
-	case "2":
-	default:
-		return fmt.Errorf("Unknown Config")
-	}
-	return RunPressBySteps(ctx, cfg.GetSteps())
-}
-
-func RunPressBySteps(ctx context.Context, steps []yamltemplate.IStep) error {
-	for _, step := range steps {
+func RunPress(ctx context.Context, config yamltemplate.IConfig) error {
+	for _, step := range config.GetSteps() {
 		step.Print()
 		pm := &PressManager{
-			Stat: &PressStat{},
-			Step: step,
+			Stat:   &PressStat{Step: step},
+			Step:   step,
+			Config: config,
 		}
-		pm.RunPress(ctx)
+		err := pm.RunPress(ctx)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 type PressManager struct {
-	Stat IStat
-	Step yamltemplate.IStep
+	Stat   IStat
+	Step   yamltemplate.IStep
+	Config yamltemplate.IConfig
 }
 
 func (pm *PressManager) RunPress(ctx context.Context) error {
 	ctx1, cancel := context.WithCancel(ctx)
-	defer cancel()
-
+	defer func() {
+		_ = pm.Close()
+		cancel()
+	}()
+	// check request
 	_, err := pm.Step.NewRequest(ctx1)
 	if err != nil {
 		return err
 	}
-
-	threadRampUp := pm.Step.NewThreadRampUp(ctx1)
-	go threadRampUp(pm.worker)
-
-	intervalTicker := pm.Step.NewIntervalTicker()
-	stopTimer := pm.Step.NewStopTimer()
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-stopTimer.C:
-			pm.Stat.Close()
-			cancel()
-			return nil
-		case <-intervalTicker.C:
-			snapshot := pm.Stat.Snapshot()
-			fmt.Printf("%#v\n", snapshot)
-		}
+	// start worker
+	go pm.Step.NewThreadRampUp(ctx1)(pm.worker)
+	// start stat snapshot
+	go pm.Stat.IntervalSnapshotWithHandler(ctx1, NewSnapshotHandler(pm.Config))
+	// wait
+	select {
+	case <-ctx1.Done():
+		return ctx1.Err()
+	case <-pm.Step.NewStopTimer().C:
+		return nil
 	}
 }
 
@@ -89,4 +79,8 @@ func (pm *PressManager) worker(ctx context.Context) {
 			pm.Stat.RecordSuccess()
 		}
 	}
+}
+
+func (pm *PressManager) Close() error {
+	return pm.Stat.Close()
 }

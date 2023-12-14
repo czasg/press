@@ -62,18 +62,3 @@ func Parse(body []byte) (IConfig, error) {
 		return nil, fmt.Errorf("Unsupport Version[%s]", cfg.Version)
 	}
 }
-
-func ParseVersion(body []byte) (*BasicConfigVersion, error) {
-	cfg := BasicConfigVersion{}
-	err := yaml.Unmarshal(body, &cfg)
-	if err != nil {
-		return nil, err
-	}
-	switch cfg.Version {
-	case "1":
-	case "2":
-	default:
-		return nil, err
-	}
-	return &cfg, nil
-}

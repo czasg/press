@@ -1,6 +1,8 @@
 package press
 
 import (
+	"context"
+	"github.com/czasg/press/internal/yamltemplate"
 	"sync"
 	"time"
 )
@@ -11,38 +13,29 @@ type IStat interface {
 	RecordThread()
 	RecordTime(t time.Time)
 	Snapshot() Snapshot
+	IntervalSnapshotWithHandler(ctx context.Context, handler SnapshotHandler)
 	Close() error
-}
-
-type Snapshot struct {
-	Throughput               int64
-	ThroughputMean           int64
-	ResponseTimeMin          int64
-	ResponseTimeMean         int64
-	ResponseTimeMax          int64
-	TotalFailureRequestCount int64
-	TotalRequestCount        int64
-	ThreadNum                int64
 }
 
 var _ IStat = (*PressStat)(nil)
 
 type PressStat struct {
-	Lock                     sync.Mutex
-	Once                     sync.Once
-	TotalRequestCount        int64     // 请求次数
-	TotalStatCount           int64     // 统计次数
-	Throughput               int64     // 吞吐量
-	TotalSuccessRequestCount int64     // 请求次数-成功
-	TotalFailureRequestCount int64     // 请求次数-失败
-	MinResponseTime          int64     // 最小响应时间
-	MaxResponseTime          int64     // 最大响应时间
-	TotalResponseTime        int64     // 总响应时间-均值计算
-	ThreadNum                int64     // 现成数
-	Closed                   bool      // 关闭
-	StartedAt                time.Time // 开始时间
-	ClosedAt                 time.Time // 关闭时间
-	LastSnapshotAt           time.Time // 最后一次快照时间
+	Lock                     sync.Mutex         `json:"-"`
+	Once                     sync.Once          `json:"-"`
+	Step                     yamltemplate.IStep `json:"-"`
+	TotalRequestCount        int64              `json:"totalRequestCount"`        // 请求次数
+	TotalStatCount           int64              `json:"totalStatCount"`           // 统计次数
+	Throughput               int64              `json:"throughput"`               // 吞吐量
+	TotalSuccessRequestCount int64              `json:"totalSuccessRequestCount"` // 请求次数-成功
+	TotalFailureRequestCount int64              `json:"totalFailureRequestCount"` // 请求次数-失败
+	MinResponseTime          int64              `json:"minResponseTime"`          // 最小响应时间
+	MaxResponseTime          int64              `json:"maxResponseTime"`          // 最大响应时间
+	TotalResponseTime        int64              `json:"totalResponseTime"`        // 总响应时间-均值计算
+	ThreadNum                int64              `json:"threadNum"`                // 现成数
+	Closed                   bool               `json:"closed"`                   // 关闭
+	StartedAt                time.Time          `json:"startedAt"`                // 开始时间
+	ClosedAt                 time.Time          `json:"closedAt"`                 // 关闭时间
+	LastSnapshotAt           time.Time          `json:"lastSnapshotAt"`           // 最后一次快照时间
 }
 
 func (p *PressStat) Snapshot() Snapshot {
@@ -64,6 +57,19 @@ func (p *PressStat) Snapshot() Snapshot {
 		TotalFailureRequestCount: p.TotalFailureRequestCount,
 		TotalRequestCount:        p.TotalRequestCount,
 		ThreadNum:                p.ThreadNum,
+	}
+}
+
+func (p *PressStat) IntervalSnapshotWithHandler(ctx context.Context, handler SnapshotHandler) {
+	ticker := p.Step.NewIntervalTicker()
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			handler(ctx, p.Snapshot())
+		}
 	}
 }
 

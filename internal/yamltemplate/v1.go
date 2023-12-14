@@ -25,16 +25,16 @@ version: "1"
 metadata:
   name: "press"
 steps:
-  - name: "压力测试"
+  - name: "press test"
     logInterval: 1
     threadGroup:
-      thread: 2
+      thread: 1
       threadRampUp: 1
       duration: 10
     http:
       url: "http://localhost:8080"
       method: "GET"
-      timeout: 10
+      timeout: 5
       keepalive: false
     #      headers:
     #        content-type: "application/json"
