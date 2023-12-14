@@ -10,7 +10,6 @@ type IStat interface {
 	RecordFailure()
 	RecordThread()
 	RecordTime(t time.Time)
-	RecordThroughput(t time.Time)
 	Snapshot(t time.Time) Snapshot
 	Close() error
 }
@@ -29,19 +28,20 @@ type Snapshot struct {
 var _ IStat = (*PressStat)(nil)
 
 type PressStat struct {
-	Lock                        sync.Mutex
-	Once                        sync.Once
-	TotalRequestCount           int64     // 请求次数
-	TotalStatCount              int64     // 统计次数
-	Throughput                  int64     // 吞吐量
-	ThroughputLastCalculateTime time.Time // 吞吐量最后计算时间
-	TotalSuccessRequestCount    int64     // 请求次数-成功
-	TotalFailureRequestCount    int64     // 请求次数-失败
-	MinResponseTime             int64     // 最小响应时间
-	MaxResponseTime             int64     // 最大响应时间
-	TotalResponseTime           int64     // 总响应时间-均值计算
-	ThreadNum                   int64     // 现成数
-	Closed                      bool      // 关闭
+	Lock                     sync.Mutex
+	Once                     sync.Once
+	TotalRequestCount        int64     // 请求次数
+	TotalStatCount           int64     // 统计次数
+	Throughput               int64     // 吞吐量
+	TotalSuccessRequestCount int64     // 请求次数-成功
+	TotalFailureRequestCount int64     // 请求次数-失败
+	MinResponseTime          int64     // 最小响应时间
+	MaxResponseTime          int64     // 最大响应时间
+	TotalResponseTime        int64     // 总响应时间-均值计算
+	ThreadNum                int64     // 现成数
+	Closed                   bool      // 关闭
+	StartedAt                time.Time // 开始时间
+	ClosedAt                 time.Time // 关闭时间
 }
 
 func (p *PressStat) Snapshot(t time.Time) Snapshot {
@@ -51,11 +51,13 @@ func (p *PressStat) Snapshot(t time.Time) Snapshot {
 		return Snapshot{}
 	}
 	p.TotalStatCount++
+	throughput := int64(float64(p.Throughput) / float64(time.Since(t).Milliseconds()) * 1000)
+	p.Throughput = 0
 	return Snapshot{
-		Throughput:               p.Throughput / time.Since(t).Milliseconds() * 1000,
-		ThroughputMean:           p.TotalSuccessRequestCount / p.TotalStatCount,
+		Throughput:               throughput,
+		ThroughputMean:           int64(float64(p.TotalRequestCount) / float64(time.Since(p.StartedAt).Milliseconds()) * 1000),
 		ResponseTimeMin:          p.MinResponseTime,
-		ResponseTimeMean:         p.TotalResponseTime / p.TotalRequestCount,
+		ResponseTimeMean:         int64(float64(p.TotalResponseTime) / float64(p.TotalRequestCount)),
 		ResponseTimeMax:          p.MaxResponseTime,
 		TotalFailureRequestCount: p.TotalFailureRequestCount,
 		TotalRequestCount:        p.TotalRequestCount,
@@ -63,41 +65,11 @@ func (p *PressStat) Snapshot(t time.Time) Snapshot {
 	}
 }
 
-//func (p *PressStat) Log() {
-//	p.Lock.Lock()
-//	defer p.Lock.Unlock()
-//	var (
-//		qps              int64
-//		meanQPS          int64
-//		meanResponseTime int64
-//	)
-//	if p.Throughput > 0 {
-//		qps = p.Throughput / time.Since(p.ThroughputLastCalculateTime).Milliseconds() * 1000
-//	}
-//	if p.TotalSuccessRequestCount > 0 {
-//		meanQPS = p.TotalSuccessRequestCount / p.TotalStatCount
-//	}
-//	if p.TotalResponseTime > 0 {
-//		meanResponseTime = p.TotalResponseTime / p.TotalStatCount
-//	}
-//	logrus.WithFields(logrus.Fields{
-//		"QPS":      qps,
-//		"QPS(平均)":  meanQPS,
-//		"响应时间(最小)": p.MinResponseTime,
-//		"响应时间(平均)": meanResponseTime,
-//		"响应时间(最大)": p.MaxResponseTime,
-//		"总失败数":     p.TotalFailureRequestCount,
-//		"总请求数":     p.TotalRequestCount,
-//		"线程数":      p.ThreadNum,
-//	}).Info("pressing...")
-//	p.Throughput = 0
-//	p.ThroughputLastCalculateTime = time.Now()
-//}
-
 func (p *PressStat) Close() error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 	p.Closed = true
+	p.ClosedAt = time.Now()
 	return nil
 }
 
@@ -120,6 +92,7 @@ func (p *PressStat) RecordFailure() {
 	}
 	p.TotalRequestCount++
 	p.TotalFailureRequestCount++
+	p.Throughput++
 }
 
 func (p *PressStat) RecordThread() {
@@ -140,7 +113,7 @@ func (p *PressStat) RecordTime(startTime time.Time) {
 	responseTime := time.Since(startTime).Milliseconds()
 	p.Once.Do(func() {
 		p.MinResponseTime = responseTime
-		p.ThroughputLastCalculateTime = time.Now()
+		p.StartedAt = time.Now()
 	})
 	if responseTime < p.MinResponseTime {
 		p.MinResponseTime = responseTime
@@ -149,13 +122,4 @@ func (p *PressStat) RecordTime(startTime time.Time) {
 		p.MaxResponseTime = responseTime
 	}
 	p.TotalResponseTime += responseTime
-}
-
-func (p *PressStat) RecordThroughput(startTime time.Time) {
-	p.Lock.Lock()
-	defer p.Lock.Unlock()
-	if p.Closed {
-		return
-	}
-	p.Throughput = int64(float64(p.Throughput) / float64(time.Since(p.ThroughputLastCalculateTime).Milliseconds()) * 1000)
 }

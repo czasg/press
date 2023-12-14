@@ -19,9 +19,6 @@ func RunPress(ctx context.Context, cfg interface{}) error {
 
 func RunPressV1(ctx context.Context, cfg yamltemplate.ConfigV1) error {
 	for _, step := range cfg.Steps {
-		//logrus.Info("#########################")
-		//logrus.Printf("######## task[%v] ########", index)
-		//logrus.Info("#########################")
 		step.Print()
 		pm := &PressManager{
 			Stat: &PressStat{},
@@ -29,9 +26,6 @@ func RunPressV1(ctx context.Context, cfg yamltemplate.ConfigV1) error {
 		}
 		pm.RunPress(ctx)
 	}
-	//logrus.Info("##########################")
-	//logrus.Info("######## over ########")
-	//logrus.Info("##########################")
 	return nil
 }
 
@@ -39,49 +33,6 @@ type PressManager struct {
 	Stat IStat
 	Step yamltemplate.IStep
 }
-
-//func (pm *PressManager) RunPressV1(ctx context.Context, step yamltemplate.StepsV1) error {
-//	ctx1, cancel := context.WithCancel(ctx)
-//	defer cancel()
-//
-//	req, err := step.Http.NewRequest(ctx1)
-//	if err != nil {
-//		return err
-//	}
-//	client := step.Http.NewClient(ctx1)
-//	assert := step.Assert.NewAssert()
-//
-//	go func() {
-//		interval := time.Second * time.Duration(step.ThreadGroup.ThreadRampUp) / time.Duration(step.ThreadGroup.Thread)
-//		for i := 0; i < step.ThreadGroup.Thread; i++ {
-//			select {
-//			case <-ctx1.Done():
-//				return
-//			default:
-//				go pm.worker(ctx1, req, client, assert)
-//				time.Sleep(interval)
-//			}
-//		}
-//	}()
-//
-//	closeTimer := time.NewTimer(time.Second * time.Duration(step.ThreadGroup.Duration))
-//	intervalTicker := time.NewTicker(time.Second * time.Duration(step.LogInterval))
-//	currentSnapshotTime := time.Now()
-//	for {
-//		select {
-//		case <-ctx1.Done():
-//			return nil
-//		case <-closeTimer.C:
-//			pm.Stat.Close()
-//			cancel()
-//			return nil
-//		case <-intervalTicker.C:
-//			snapshot := pm.Stat.Snapshot(currentSnapshotTime)
-//			currentSnapshotTime = time.Now()
-//			fmt.Printf("%#v\n", snapshot)
-//		}
-//	}
-//}
 
 func (pm *PressManager) RunPress(ctx context.Context) error {
 	ctx1, cancel := context.WithCancel(ctx)
