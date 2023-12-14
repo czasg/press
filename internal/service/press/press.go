@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/czasg/press/internal/yamltemplate"
-	"net/http"
 	"time"
 )
 
@@ -39,20 +38,14 @@ func (pm *PressManager) RunPress(ctx context.Context) error {
 	ctx1, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	assert := pm.Step.NewAssert()
-	client := pm.Step.NewClient()
-	req, err := pm.Step.NewRequest(ctx1)
+	_, err := pm.Step.NewRequest(ctx1)
 	if err != nil {
 		return err
 	}
-	workerThread := func(ctx context.Context) {
-		pm.worker(ctx, req, client, assert)
-	}
 
 	threadRampUp := pm.Step.NewThreadRampUp(ctx1)
-	go threadRampUp(workerThread)
+	go threadRampUp(pm.worker)
 
-	currentSnapshotTime := time.Now()
 	intervalTicker := pm.Step.NewIntervalTicker()
 	stopTimer := pm.Step.NewStopTimer()
 	for {
@@ -64,20 +57,17 @@ func (pm *PressManager) RunPress(ctx context.Context) error {
 			cancel()
 			return nil
 		case <-intervalTicker.C:
-			snapshot := pm.Stat.Snapshot(currentSnapshotTime)
-			currentSnapshotTime = time.Now()
+			snapshot := pm.Stat.Snapshot()
 			fmt.Printf("%#v\n", snapshot)
 		}
 	}
 }
 
-func (pm *PressManager) worker(
-	ctx context.Context,
-	req *http.Request,
-	client *http.Client,
-	assertResponse yamltemplate.AssertResponse,
-) {
+func (pm *PressManager) worker(ctx context.Context) {
 	pm.Stat.RecordThread()
+	assert := pm.Step.NewAssert()
+	client := pm.Step.NewClient()
+	req, _ := pm.Step.NewRequest(ctx)
 	for {
 		select {
 		case <-ctx.Done():
@@ -85,14 +75,13 @@ func (pm *PressManager) worker(
 		}
 		err := func() error {
 			defer pm.Stat.RecordTime(time.Now())
-			timeoutCtx, cancel := context.WithTimeout(ctx, time.Second)
-			defer cancel()
-			resp, err := client.Do(req.WithContext(timeoutCtx))
+			resp, err := client.Do(req)
 			if err != nil {
+				fmt.Println(err.Error())
 				return err
 			}
 			defer resp.Body.Close()
-			return assertResponse(resp)
+			return assert(resp)
 		}()
 		if err != nil {
 			pm.Stat.RecordFailure()

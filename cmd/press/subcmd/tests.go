@@ -57,7 +57,7 @@ func NewPressTestCommand(ctx context.Context) *cobra.Command {
 	}
 	{
 		cf.StringVar(&step.Http.Method, "method", "GET", "HTTP 请求方式")
-		cf.IntVar(&step.Http.Timeout, "timeout", 24, "HTTP 请求超时时间")
+		cf.Float64Var(&step.Http.Timeout, "timeout", 24, "HTTP 请求超时时间")
 		cf.BoolVar(&step.Http.Keepalive, "keepalive", false, "HTTP Keepalive")
 		cf.StringVar(&step.Http.Body, "body", "", "HTTP 请求体")
 		cf.StringArray("header", []string{}, "HTTP 请求头")

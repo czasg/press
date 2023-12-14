@@ -10,7 +10,7 @@ type IStat interface {
 	RecordFailure()
 	RecordThread()
 	RecordTime(t time.Time)
-	Snapshot(t time.Time) Snapshot
+	Snapshot() Snapshot
 	Close() error
 }
 
@@ -42,17 +42,19 @@ type PressStat struct {
 	Closed                   bool      // 关闭
 	StartedAt                time.Time // 开始时间
 	ClosedAt                 time.Time // 关闭时间
+	LastSnapshotAt           time.Time // 最后一次快照时间
 }
 
-func (p *PressStat) Snapshot(t time.Time) Snapshot {
+func (p *PressStat) Snapshot() Snapshot {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 	if p.TotalRequestCount < 1 {
 		return Snapshot{}
 	}
-	p.TotalStatCount++
-	throughput := int64(float64(p.Throughput) / float64(time.Since(t).Milliseconds()) * 1000)
+	throughput := int64(float64(p.Throughput) / float64(time.Since(p.LastSnapshotAt).Milliseconds()) * 1000)
 	p.Throughput = 0
+	p.LastSnapshotAt = time.Now()
+	p.TotalStatCount++
 	return Snapshot{
 		Throughput:               throughput,
 		ThroughputMean:           int64(float64(p.TotalRequestCount) / float64(time.Since(p.StartedAt).Milliseconds()) * 1000),
@@ -114,6 +116,7 @@ func (p *PressStat) RecordTime(startTime time.Time) {
 	p.Once.Do(func() {
 		p.MinResponseTime = responseTime
 		p.StartedAt = time.Now()
+		p.LastSnapshotAt = p.StartedAt
 	})
 	if responseTime < p.MinResponseTime {
 		p.MinResponseTime = responseTime
