@@ -41,14 +41,8 @@ func NewPressTestCommand(ctx context.Context) *cobra.Command {
 				}
 				step.Http.Headers[hs[0]] = hs[1]
 			}
-			return press.RunPressV1(ctx, yamltemplate.ConfigV1{
-				Version: "1",
-				Metadata: yamltemplate.MetadataV1{
-					Name: "press test",
-				},
-				Steps: []yamltemplate.StepsV1{
-					step,
-				},
+			return press.RunPressBySteps(ctx, []yamltemplate.IStep{
+				&step,
 			})
 		},
 	}

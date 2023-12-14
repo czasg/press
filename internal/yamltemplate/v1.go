@@ -14,9 +14,14 @@ import (
 	"time"
 )
 
+var (
+	_ IConfig = (*ConfigV1)(nil)
+	_ IStep   = (*StepsV1)(nil)
+)
+
 func NewTemplateV1() string {
 	return `---
-version: "1.0"
+version: "1"
 metadata:
   name: "press"
 steps:
@@ -53,6 +58,19 @@ type ConfigV1 struct {
 	Metadata MetadataV1 `json:"metadata" yaml:"metadata"`
 	Steps    []StepsV1  `json:"steps" yaml:"steps"`
 }
+
+func (c *ConfigV1) GetVersion() string {
+	return c.Version
+}
+
+func (c *ConfigV1) GetSteps() []IStep {
+	ss := []IStep{}
+	for _, step := range c.Steps {
+		ss = append(ss, &step)
+	}
+	return ss
+}
+
 type MetadataV1 struct {
 	Name string `json:"name" yaml:"name"`
 }
@@ -277,4 +295,17 @@ func ParseConfigV1(body []byte) (*ConfigV1, error) {
 		return nil, err
 	}
 	return &cfg, nil
+}
+
+func TransformV1(cfg IConfig) (*ConfigV1, error) {
+	body, err := json.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+	var v1 ConfigV1
+	err = json.Unmarshal(body, &v1)
+	if err != nil {
+		return nil, err
+	}
+	return &v1, nil
 }

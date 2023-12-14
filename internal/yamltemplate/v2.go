@@ -2,9 +2,14 @@ package yamltemplate
 
 import "gopkg.in/yaml.v2"
 
+var (
+	_ IConfig = (*ConfigV2)(nil)
+	//_ IStep   = (*StepsV2)(nil)
+)
+
 func NewTemplateV2() string {
 	return `---
-version: "1.0"
+version: "2"
 metadata:
   name: "press"
   clusterEnable: false
@@ -54,8 +59,21 @@ func ParseConfigV2(body []byte) (*ConfigV2, error) {
 type ConfigV2 struct {
 	Version  string     `json:"version" yaml:"version"`
 	Metadata MetadataV2 `json:"metadata" yaml:"metadata"`
-	Steps    []StepsV2  `json:"steps" yaml:"steps"`
+	Steps    []StepsV1  `json:"steps" yaml:"steps"`
 }
+
+func (c *ConfigV2) GetVersion() string {
+	return c.Version
+}
+
+func (c *ConfigV2) GetSteps() []IStep {
+	ss := []IStep{}
+	for _, step := range c.Steps {
+		ss = append(ss, &step)
+	}
+	return ss
+}
+
 type MetadataV2 struct {
 	Name          string         `json:"name" yaml:"name"`
 	ClusterEnable bool           `json:"clusterEnable" yaml:"clusterEnable"`

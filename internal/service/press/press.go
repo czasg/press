@@ -8,21 +8,22 @@ import (
 	"time"
 )
 
-func RunPress(ctx context.Context, cfg interface{}) error {
-	switch cfg.(type) {
-	case yamltemplate.ConfigV1:
-		return RunPressV1(ctx, cfg.(yamltemplate.ConfigV1))
+func RunPress(ctx context.Context, cfg yamltemplate.IConfig) error {
+	switch cfg.GetVersion() {
+	case "1":
+	case "2":
 	default:
 		return fmt.Errorf("Unknown Config")
 	}
+	return RunPressBySteps(ctx, cfg.GetSteps())
 }
 
-func RunPressV1(ctx context.Context, cfg yamltemplate.ConfigV1) error {
-	for _, step := range cfg.Steps {
+func RunPressBySteps(ctx context.Context, steps []yamltemplate.IStep) error {
+	for _, step := range steps {
 		step.Print()
 		pm := &PressManager{
 			Stat: &PressStat{},
-			Step: &step,
+			Step: step,
 		}
 		pm.RunPress(ctx)
 	}
