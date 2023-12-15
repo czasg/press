@@ -13,6 +13,7 @@ type Snapshot struct {
 	ResponseTimeMin          int64
 	ResponseTimeMean         int64
 	ResponseTimeMax          int64
+	TotalResponseTime        int64
 	TotalFailureRequestCount int64
 	TotalRequestCount        int64
 	ThreadNum                int64

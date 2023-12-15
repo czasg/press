@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/czasg/snow"
 	"gopkg.in/yaml.v2"
 )
 
@@ -12,6 +13,7 @@ type Config struct {
 
 type Metadata struct {
 	Name        string      `json:"name" yaml:"name"`
+	Uid         int64       `json:"uid"`
 	Annotations Annotations `json:"annotations" yaml:"annotations"`
 }
 
@@ -59,7 +61,7 @@ metadata:
   annotations:
     press.cluster.broker: redis
     press.cluster.broker/enabled: false
-    press.cluster.broker/redis.url: "redis://redis:redis@redis:6379/0"
+    press.cluster.broker/redis.url: "redis://:@localhost:6379/0"
 steps:
   - name: "press test"
     logInterval: 1
@@ -95,5 +97,6 @@ func Parse(body []byte) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	cfg.Metadata.Uid = snow.Next()
 	return &cfg, nil
 }

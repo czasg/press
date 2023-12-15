@@ -1,24 +1,29 @@
 package third
 
-import "github.com/go-redis/redis"
+import (
+	"github.com/czasg/press/internal/config"
+	"github.com/go-redis/redis"
+	"net/url"
+	"strconv"
+)
 
-type RedisConfig struct {
-	Address     string
-	Password    string
-	DB          int
-	PoolSize    int
-	MaxRetries  int
-	MinIdleSize int
-}
-
-func NewRedis(cfg RedisConfig) (*redis.Client, error) {
+func NewRedis(cfg *config.Config) (*redis.Client, error) {
+	parsedURL, err := url.Parse(cfg.Metadata.Annotations.PressClusterBrokerRedisUrl)
+	if err != nil {
+		return nil, err
+	}
+	password, _ := parsedURL.User.Password()
+	db, err := strconv.Atoi(parsedURL.Path[1:])
+	if err != nil {
+		return nil, err
+	}
 	ins := redis.NewClient(&redis.Options{
-		Addr:       cfg.Address,
-		Password:   cfg.Password,
-		DB:         cfg.DB,
+		Addr:       parsedURL.Host,
+		Password:   password,
+		DB:         db,
 		MaxRetries: 3,
 	})
-	err := ins.Ping().Err()
+	err = ins.Ping().Err()
 	if err != nil {
 		return nil, err
 	}

@@ -42,7 +42,7 @@ func (pm *PressManager) RunPress(ctx context.Context) error {
 	go pm.WorkerGroup(ctx1)
 	select {
 	case <-ctx1.Done():
-		return ctx1.Err()
+		return nil
 	case <-pm.StepManager.NewStopTimer().C:
 		return nil
 	}
@@ -54,10 +54,9 @@ func (pm *PressManager) IntervalSnapshot(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil
 		case <-ticker.C:
-			snapshot := pm.Stat.Snapshot()
-			fmt.Printf("%#v\n", snapshot)
+			pm.SnapshotHandler(ctx, pm.Stat.Snapshot())
 		}
 	}
 }
@@ -90,6 +89,7 @@ func (pm *PressManager) Check(ctx context.Context) error {
 func logWithConfig(cfg *config.Config) {
 	logrus.WithField("Version", cfg.Version).Info("检测到当前版本")
 	logrus.WithField("User", cfg.Metadata.Name).Info("检测到当前用户")
+	logrus.WithField("Uid", cfg.Metadata.Uid).Info("检测到任务编码")
 	fmt.Println("----------------------------------------------------------------------------")
 }
 

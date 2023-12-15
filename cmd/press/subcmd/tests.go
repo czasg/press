@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/czasg/press/internal/config"
 	"github.com/czasg/press/internal/service"
+	"github.com/czasg/snow"
 	"github.com/spf13/cobra"
 	"strings"
 )
@@ -45,6 +46,7 @@ func NewPressTestCommand(ctx context.Context) *cobra.Command {
 				Version: "1",
 				Metadata: config.Metadata{
 					Name: "press test",
+					Uid:  snow.Next(),
 				},
 				Steps: []config.Steps{
 					step,

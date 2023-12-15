@@ -9,7 +9,6 @@ type Stat struct {
 	Lock                     sync.Mutex `json:"-"`
 	Once                     sync.Once  `json:"-"`
 	TotalRequestCount        int64      `json:"totalRequestCount"`        // 请求次数
-	TotalStatCount           int64      `json:"totalStatCount"`           // 统计次数
 	Throughput               int64      `json:"throughput"`               // 吞吐量
 	TotalSuccessRequestCount int64      `json:"totalSuccessRequestCount"` // 请求次数-成功
 	TotalFailureRequestCount int64      `json:"totalFailureRequestCount"` // 请求次数-失败
@@ -32,13 +31,13 @@ func (p *Stat) Snapshot() Snapshot {
 	throughput := int64(float64(p.Throughput) / float64(time.Since(p.LastSnapshotAt).Milliseconds()) * 1000)
 	p.Throughput = 0
 	p.LastSnapshotAt = time.Now()
-	p.TotalStatCount++
 	return Snapshot{
 		Throughput:               throughput,
 		ThroughputMean:           int64(float64(p.TotalRequestCount) / float64(time.Since(p.StartedAt).Milliseconds()) * 1000),
 		ResponseTimeMin:          p.MinResponseTime,
 		ResponseTimeMean:         int64(float64(p.TotalResponseTime) / float64(p.TotalRequestCount)),
 		ResponseTimeMax:          p.MaxResponseTime,
+		TotalResponseTime:        p.TotalResponseTime,
 		TotalFailureRequestCount: p.TotalFailureRequestCount,
 		TotalRequestCount:        p.TotalRequestCount,
 		ThreadNum:                p.ThreadNum,
