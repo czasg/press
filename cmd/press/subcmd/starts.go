@@ -3,9 +3,9 @@ package subcmd
 import (
 	"context"
 	"fmt"
-	"github.com/czasg/press/internal/service/press"
+	"github.com/czasg/press/internal/config"
+	"github.com/czasg/press/internal/service"
 	"github.com/czasg/press/internal/utils"
-	"github.com/czasg/press/internal/yamltemplate"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -28,11 +28,11 @@ func NewPressStartCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			cfg, err := yamltemplate.Parse(body)
+			cfg, err := config.Parse(body)
 			if err != nil {
 				return err
 			}
-			return press.RunPress(ctx, cfg)
+			return service.RunPress(ctx, cfg)
 		},
 	}
 	cf := startCmd.Flags()

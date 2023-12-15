@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/czasg/press/internal/service/press"
-	"github.com/czasg/press/internal/yamltemplate"
+	"github.com/czasg/press/internal/config"
+	"github.com/czasg/press/internal/service"
 	"github.com/spf13/cobra"
 	"strings"
 )
 
 func NewPressTestCommand(ctx context.Context) *cobra.Command {
-	step := yamltemplate.StepsV1{Name: "press test"}
+	step := config.Steps{}
 	testCmd := &cobra.Command{
 		Use:   "test [url]",
 		Short: "press testing",
@@ -39,12 +39,14 @@ func NewPressTestCommand(ctx context.Context) *cobra.Command {
 				if len(hs) != 2 {
 					continue
 				}
-				step.Http.Headers[hs[0]] = strings.TrimSpace(hs[1])
+				step.Http.Headers[strings.Title(hs[0])] = strings.TrimSpace(hs[1])
 			}
-			return press.RunPress(ctx, &yamltemplate.ConfigV1{
-				Version:  "1",
-				Metadata: yamltemplate.MetadataV1{Name: "press test"},
-				Steps: []yamltemplate.StepsV1{
+			return service.RunPress(ctx, &config.Config{
+				Version: "1",
+				Metadata: config.Metadata{
+					Name: "press test",
+				},
+				Steps: []config.Steps{
 					step,
 				},
 			})

@@ -13,7 +13,7 @@ type IStat interface {
 	RecordThread()
 	RecordTime(t time.Time)
 	Snapshot() Snapshot
-	IntervalSnapshotWithHandler(ctx context.Context, handler SnapshotHandler)
+	IntervalSnapshot(ctx context.Context)
 	Close() error
 }
 
@@ -23,6 +23,7 @@ type PressStat struct {
 	Lock                     sync.Mutex         `json:"-"`
 	Once                     sync.Once          `json:"-"`
 	Step                     yamltemplate.IStep `json:"-"`
+	SnapshotHandler          SnapshotHandler    `json:"-"`
 	TotalRequestCount        int64              `json:"totalRequestCount"`        // 请求次数
 	TotalStatCount           int64              `json:"totalStatCount"`           // 统计次数
 	Throughput               int64              `json:"throughput"`               // 吞吐量
@@ -60,7 +61,11 @@ func (p *PressStat) Snapshot() Snapshot {
 	}
 }
 
-func (p *PressStat) IntervalSnapshotWithHandler(ctx context.Context, handler SnapshotHandler) {
+func (p *PressStat) IntervalSnapshot(ctx context.Context) {
+	handler := p.SnapshotHandler
+	if handler == nil {
+		handler = SnapshotLogHandler
+	}
 	ticker := p.Step.NewIntervalTicker()
 	defer ticker.Stop()
 	for {

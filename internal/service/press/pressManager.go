@@ -43,7 +43,7 @@ func (pm *PressManager) RunPress(ctx context.Context) error {
 	// start worker
 	go pm.Step.NewThreadRampUp(ctx1)(pm.worker)
 	// start stat snapshot
-	go pm.Stat.IntervalSnapshotWithHandler(ctx1, NewSnapshotHandler(pm.Config))
+	go pm.Stat.IntervalSnapshot(ctx1)
 	// wait
 	select {
 	case <-ctx1.Done():

@@ -24,24 +24,28 @@ func NewTemplateV1() string {
 version: "1"
 metadata:
   name: "press"
+  annotations:
+    press.cluster.broker: redis
+    press.cluster.broker/enabled: false
+    press.cluster.broker/redis.url: "redis://redis:redis@redis:6379/0"
 steps:
   - name: "press test"
     logInterval: 1
     threadGroup:
-      thread: 1
+      thread: 2
       threadRampUp: 1
       duration: 10
     http:
       url: "http://localhost:8080"
       method: "GET"
-      timeout: 5
+      timeout: 10
       keepalive: false
-    #      headers:
-    #        content-type: "application/json"
-    #      body: |
-    #        {
-    #          "hello":"press"
-    #        }
+#      headers:
+#        content-type: "application/json"
+#      body: |
+#        {
+#          "hello":"press"
+#        }
     assert:
       statusCode: 200
 #      headers:
