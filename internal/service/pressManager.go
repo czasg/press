@@ -4,23 +4,35 @@ import (
 	"context"
 	"fmt"
 	"github.com/czasg/press/internal/config"
+	"github.com/sirupsen/logrus"
 	"time"
 )
 
-func RunPress(ctx context.Context, config *config.Config) error {
-	for _, step := range config.Steps {
+func RunPress(ctx context.Context, cfg *config.Config) error {
+	return RunPressWithSnapshotHandler(ctx, cfg, snapshotLogHandler)
+}
+
+func RunPressWithSnapshotHandler(ctx context.Context, cfg *config.Config, handler SnapshotHandler) error {
+	logWithConfig(cfg)
+	for _, step := range cfg.Steps {
+		logWithStep(step)
 		pm := PressManager{
-			Stat:        &Stat{},
-			StepManager: NewStepManager(step),
+			Stat:            &Stat{},
+			StepManager:     NewStepManager(step),
+			SnapshotHandler: handler,
 		}
-		pm.RunPress(ctx)
+		err := pm.RunPress(ctx)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 type PressManager struct {
-	Stat        *Stat
-	StepManager *StepManager
+	Stat            *Stat
+	StepManager     *StepManager
+	SnapshotHandler SnapshotHandler
 }
 
 func (pm *PressManager) RunPress(ctx context.Context) error {
@@ -73,4 +85,19 @@ func (pm *PressManager) Close() error {
 func (pm *PressManager) Check(ctx context.Context) error {
 	_, err := pm.StepManager.NewRequest(ctx)
 	return err
+}
+
+func logWithConfig(cfg *config.Config) {
+	logrus.WithField("Version", cfg.Version).Info("检测到当前版本")
+	logrus.WithField("User", cfg.Metadata.Name).Info("检测到当前用户")
+	fmt.Println("----------------------------------------------------------------------------")
+}
+
+func logWithStep(step config.Steps) {
+	logrus.Println("任务启动")
+	logrus.Printf("名称：%v", step.Name)
+	logrus.Printf("线程数：%v", step.ThreadGroup.Thread)
+	logrus.Printf("线程唤醒时间：%vs", step.ThreadGroup.ThreadRampUp)
+	logrus.Printf("持续时间：%vs", step.ThreadGroup.Duration)
+	logrus.Printf("日志输出间隔：%vs", step.LogInterval)
 }
