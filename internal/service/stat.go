@@ -44,20 +44,6 @@ func (p *Stat) Snapshot() Snapshot {
 	}
 }
 
-//func (p *Stat) Start(ctx context.Context) {
-//	var handler SnapshotHandler
-//	ticker := time.NewTicker(time.Second * time.Duration(p.Step.LogInterval))
-//	defer ticker.Stop()
-//	for {
-//		select {
-//		case <-ctx.Done():
-//			return
-//		case <-ticker.C:
-//			handler(ctx, p.Snapshot())
-//		}
-//	}
-//}
-
 func (p *Stat) Close() error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()

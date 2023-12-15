@@ -18,9 +18,11 @@ type Metadata struct {
 }
 
 type Annotations struct {
-	PressClusterBroker         string `json:"pressClusterBroker" yaml:"press.cluster.broker"`
-	PressClusterBrokerEnabled  bool   `json:"pressClusterBrokerEnabled" yaml:"press.cluster.broker/enabled"`
-	PressClusterBrokerRedisUrl string `json:"pressClusterBrokerRedisUrl" yaml:"press.cluster.broker/redis.url"`
+	PressClusterBroker               string `json:"pressClusterBroker" yaml:"press.cluster.broker"`
+	PressClusterBrokerEnabled        bool   `json:"pressClusterBrokerEnabled" yaml:"press.cluster.broker/enabled"`
+	PressClusterBrokerRedisUrl       string `json:"pressClusterBrokerRedisUrl" yaml:"press.cluster.broker/redis.url"`
+	PressClusterBrokerRedisPbWorker  string `json:"pressClusterBrokerRedisPbWorker" yaml:"press.cluster.broker/redis.pb.worker"`
+	PressClusterBrokerRedisPbManager string `json:"pressClusterBrokerRedisPbManager" yaml:"press.cluster.broker/redis.pb.manager"`
 }
 
 type Steps struct {
@@ -62,6 +64,8 @@ metadata:
     press.cluster.broker: redis
     press.cluster.broker/enabled: false
     press.cluster.broker/redis.url: "redis://:@localhost:6379/0"
+    press.cluster.broker/redis.pb.worker: "press-test-worker"
+    press.cluster.broker/redis.pb.manager: "press-test-manager"
 steps:
   - name: "press test"
     logInterval: 1
