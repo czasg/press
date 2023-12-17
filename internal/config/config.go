@@ -18,11 +18,10 @@ type Metadata struct {
 }
 
 type Annotations struct {
-	PressClusterBroker               string `json:"pressClusterBroker" yaml:"press.cluster.broker"`
-	PressClusterBrokerEnabled        bool   `json:"pressClusterBrokerEnabled" yaml:"press.cluster.broker/enabled"`
-	PressClusterBrokerRedisUrl       string `json:"pressClusterBrokerRedisUrl" yaml:"press.cluster.broker/redis.url"`
-	PressClusterBrokerRedisPbWorker  string `json:"pressClusterBrokerRedisPbWorker" yaml:"press.cluster.broker/redis.pb.worker"`
-	PressClusterBrokerRedisPbManager string `json:"pressClusterBrokerRedisPbManager" yaml:"press.cluster.broker/redis.pb.manager"`
+	PressClusterBroker              string `json:"pressClusterBroker" yaml:"press.cluster.broker"`
+	PressClusterBrokerEnabled       bool   `json:"pressClusterBrokerEnabled" yaml:"press.cluster.broker/enabled"`
+	PressClusterBrokerRedisUrl      string `json:"pressClusterBrokerRedisUrl" yaml:"press.cluster.broker/redis.url"`
+	PressClusterBrokerRedisPbWorker string `json:"pressClusterBrokerRedisPbWorker" yaml:"press.cluster.broker/redis.pb.worker"`
 }
 
 type Steps struct {

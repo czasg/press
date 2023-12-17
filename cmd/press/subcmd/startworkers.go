@@ -46,6 +46,10 @@ func NewPressStartWorkerCommand(ctx context.Context) *cobra.Command {
 						_, _ = closeSub.ReceiveMessage()
 						cancel()
 					}()
+					defer func() {
+						rds.Publish(fmt.Sprintf("%d-closed", newCfg.Metadata.Uid), "closed")
+					}()
+					rds.RPush(fmt.Sprintf("%d-%d", newCfg.Metadata.Uid, cfg.Metadata.Uid))
 					logrus.WithFields(logrus.Fields{
 						"Uid": newCfg.Metadata.Uid,
 					}).Info("检测到压测任务")
